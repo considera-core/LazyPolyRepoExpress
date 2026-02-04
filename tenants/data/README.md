@@ -6,7 +6,7 @@
     - Required
 - root: Root path excluding end-trailing / and current drive
     - Required
-## <tenant>.csv
+## [tenant].csv
 - alias: Alias for your project (used for commands)
     - Required
 - name: Name of both csproj and assembly, they must match
