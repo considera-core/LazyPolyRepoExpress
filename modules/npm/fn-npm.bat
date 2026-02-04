@@ -23,7 +23,7 @@ EXIT /B %ERRORLEVEL%
     ECHO [VANGUARD NPM: %tenant%/%project%]
     ECHO -^> Running npm %full%
 
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     IF ERRORLEVEL 1 (
         ECHO [ERROR] Could not determine repo root path
         EXIT /B 1
@@ -35,8 +35,7 @@ EXIT /B %ERRORLEVEL%
         EXIT /B 1
     )
 
-echo %~d0%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%/%FOUND_NAME%/client
-    PUSHD "%~d0%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%/%FOUND_NAME%/client" || (
+    PUSHD "%~d0%SELECTED_TENANT_ROOT%/%FOUND_NAME%/%FOUND_NAME%/client" || (
         ECHO [ERROR] Could not cd into repo client path.
         EXIT /B 1
     )

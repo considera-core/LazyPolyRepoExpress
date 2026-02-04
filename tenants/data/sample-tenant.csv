@@ -1,14 +1,3 @@
-alias,name,label,type
-citizen,eagle-vitals,Vitals,bff
-admin,eagle-vitals-admin,Admin,bff
-support,eagle-vitals-support,Support,bff
-api,eagle-vitals-api,Api,api
-public-api,eagle-vitals-public-api,PublicApi,api
-client-api,vitals-client-public-api,ClientPublicApi,api
-job-runner,eagle-vitals-job-runner,JobRunner,lambda
-lambda-document-upload,vitals-admin-aws-s3-document-upload-lambda,AdminS3DocumentUploadLambda,lambda
-lambda-completed-forms,vitals-citizen-aws-s3-completed-forms,CitizenS3CompletedForms,lambda
-lambda-support-doc,vitals-citizen-aws-s3-support-doc,CitizenS3SupportDoc,lambda
-lambda-shipping-label-template,vitals-admin-aws-s3-shipping-label-template-lambda,AdminS3ShippingLabelTemplateLambda,lambda
-lambda-request-submission,vitals-request-submission-lambda,RequestSubmissionLambda,lambda
-cloud-stack,vitals-cloud-stack,CloudStack,lambda
+alias,name,label,type,client,server,home
+sample-bff,SampleBff,Sample BFF,bff,SampleBffClient,SampleBffServer,master
+sample-api,SampleApi,Sample API,api, ,SampleApiServer,main

@@ -14,7 +14,7 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD RUN: %tenant%/%app%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     ECHO   [INFO] Running %app%...
     CALL fn-app-launch "%tenant%" "%app%"
     CALL fn-app-launch "%tenant%" "api"

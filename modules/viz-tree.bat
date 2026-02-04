@@ -1,10 +1,9 @@
-@echo off
-REM tree.bat - Directory tree printer with depth control and file filtering
-REM Usage: tree.bat <depth> <printFiles>
-REM   depth: Integer specifying maximum depth to traverse (0 = current dir only)
-REM   printFiles: Boolean (true/false) - whether to include files in output
-
-setlocal enabledelayedexpansion
+:: viz-tree.bat - Directory tree printer with depth control and file filtering
+:: Usage: viz-tree <depth> <printFiles>
+::   depth: Integer specifying maximum depth to traverse (0 = current dir only)
+::   printFiles: Boolean (true/false) - whether to include files in output
+@ECHO OFF
+SETLOCAL EnableDelayedExpansion
 
 REM Check if correct number of parameters provided
 if "%~1"=="help" (

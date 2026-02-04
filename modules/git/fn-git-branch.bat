@@ -13,7 +13,7 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD GIT BRANCH: %tenant%/%project%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
-    CALL git -C "%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%" "branch" "--show-current"
+    CALL git -C "%SELECTED_TENANT_ROOT%/%FOUND_NAME%" "branch" "--show-current"
     EXIT /B 0

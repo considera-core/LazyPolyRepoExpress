@@ -16,10 +16,10 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
-    IF NOT EXIST "%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%" (
-        ECHO [ERROR] Missing repository: %REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%
+    IF NOT EXIST "%SELECTED_TENANT_ROOT%/%FOUND_NAME%" (
+        ECHO [ERROR] Missing repository: %SELECTED_TENANT_ROOT%/%FOUND_NAME%
     ) ELSE (
-        ECHO [INFO] Found repository: %REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%
+        ECHO [INFO] Found repository: %SELECTED_TENANT_ROOT%/%FOUND_NAME%
     )

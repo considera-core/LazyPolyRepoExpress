@@ -1,6 +1,4 @@
-id,display
-vitals,Vitals
-records,Records
-reco,RECO
-ecertify,ECertify
-ram,RAM
+alias,display,root
+sample-tenant,SampleTenant,/Users/Public/SampleTenant/Sources
+considera,Considera,/Envrionments/Dev/ConsideraDev/SoftwareDev/Sources/Considera
+musique-hub,MusiqueHub,/Envrionments/Dev/ConsideraDev/SoftwareDev/Sources/considera-musique-hub

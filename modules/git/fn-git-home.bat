@@ -13,8 +13,13 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD GIT HOME: %tenant%/%project%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
-    CALL fn-setVanguardConfigStatic "%tenant%" "%FOUND_LABEL%"
-    CALL git -C "%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%" "switch" "%VANGUARD_CONFIG_STATIC_VALUE%"
+    CALL git -C "%SELECTED_TENANT_ROOT%/%FOUND_NAME%" "switch" "%FOUND_HOME%" >NUL 2>&1
+    IF ERRORLEVEL 1 (
+        ECHO   [ERROR] GIT SWITCH HOME FAILED:
+        ECHO     git switch failed for %tenant%/%project% at %SELECTED_TENANT_ROOT%/%FOUND_NAME%
+        ECHO     Make sure the repo exists and the branch `%FOUND_HOME%` exists.
+        EXIT /B 1
+    )
     EXIT /B 0

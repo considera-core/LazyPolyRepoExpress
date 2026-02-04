@@ -14,7 +14,7 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD LAUNCH: %tenant%/%project%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (
         ECHO [ERROR] Project not found: %project%

@@ -46,7 +46,7 @@ EXIT /B %ERRORLEVEL%
     ECHO [VANGUARD GIT: %tenant%/%project%]
     ECHO -^> Running git "%full%"
 
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     IF ERRORLEVEL 1 (
         ECHO [ERROR] Could not determine repo root path
         EXIT /B 1
@@ -58,7 +58,7 @@ EXIT /B %ERRORLEVEL%
         EXIT /B 1
     )
 
-    PUSHD "%~d0%REPO_ROOT_PATH%/%tenant%/%FOUND_NAME%" || (
+    PUSHD "%~d0%SELECTED_TENANT_ROOT%/%FOUND_NAME%" || (
         ECHO [ERROR] Could not cd into repo path.
         EXIT /B 1
     )

@@ -1,4 +1,4 @@
-@echo off
+@ECHO OFF
 
 set categoryName=%~1
 set projectName=%~2

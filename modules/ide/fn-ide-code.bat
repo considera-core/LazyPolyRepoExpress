@@ -5,7 +5,7 @@
 SET "tenant=%~1"
 SET "project=%~2"
 IF NOT DEFINED project (
-    CALL fn-foreach-alias "%tenant%" fn-ide-code
+    CALL fn-forEachAlias "%tenant%" fn-ide-code
     EXIT /B 0
 )
 CALL :FN
@@ -13,7 +13,7 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD IDE CODE: %tenant%/%project%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (
         ECHO   [ERROR] Project not found: %project%

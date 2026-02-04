@@ -14,7 +14,7 @@ if (!$Here) {
 echo "  [spawn-claude/INFO] Opening Claude Code for $CategoryName/$ProjectName..."
 
 # Get the Vanguard path from config
-$vanguardPath = & vanguard-config get VanguardPath
+$vanguardPath = & fn-config get VanguardPath
 
 # Construct the project path
 $projectPath = Join-Path $vanguardPath "$CategoryName\$ProjectName"

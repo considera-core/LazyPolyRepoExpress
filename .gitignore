@@ -2,3 +2,9 @@ db-data/
 *.sql
 diff_*
 summary.txt
+.links
+lazy.config
+saved_path.txt
+tenants/data/considera.csv
+tenants/data/musique-hub.csv
+tenants/dispatch/considera.bat

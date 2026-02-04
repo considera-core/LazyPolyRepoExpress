@@ -24,7 +24,7 @@ EXIT /B 0
 
 :FN
     ECHO [VANGUARD AI: Claude Code for %tenant%/%project%]
-    CALL fn-setRepoRootPath
+    CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (
         ECHO [ERROR] Project not found: %project%

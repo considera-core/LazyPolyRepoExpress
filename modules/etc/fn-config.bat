@@ -11,14 +11,20 @@ SETLOCAL ENABLEDELAYEDEXPANSION
 SET function=%~1
 SET key=%~2
 SET value=%~3
-SET configPath=C:\ROOT_DEV_TODO\Vanguard\Auto\eagle-vanguard-tools\suites\configuration
-SET configFile=%configPath%\vanguard.config
-SET configFileStatic=%configPath%\vanguard.static.config
-SET configFileTemp=%configPath%\vanguard.config.tmp
-SET configFileRes=%configPath%\vanguard.config.res
-SET configFileDefault=%configPath%\vanguard.default.config
+
+REM Set configPath relative to the script location
+SET "scriptDir=%~dp0"
+REM Remove trailing backslash if present
+IF "%scriptDir:~-1%"=="\" SET "scriptDir=%scriptDir:~0,-1%"
+SET "configPath=%scriptDir%\..\config"
+REM Normalize the path
+FOR %%I IN ("%configPath%") DO SET "configPath=%%~fI"
+SET configFile=%configPath%\lazy.config
+SET configFileStatic=%configPath%\lazy.static.config
+SET configFileTemp=%configPath%\lazy.config.tmp
+SET configFileRes=%configPath%\lazy.config.res
+SET configFileDefault=%configPath%\lazy.default.config
 SET added=0
-SET lines=
 
 IF "%function%"=="new" (
     COPY %configFileDefault% %configFile% > NUL
@@ -102,14 +108,14 @@ IF "%function%"=="static" (
 
 echo Usage for Config helper script:
 echo   Usages: 
-echo     ^|^| vanguard-config [function] [key?] [value?]
-echo     ^|^| vanguard-config get [key]
-echo     ^|^| vanguard-config list
-echo     ^|^| vanguard-config set [key] [value]
-echo     ^|^| vanguard-config del [key]
-echo     ^|^| vanguard-config new
-echo     ^|^| vanguard-config static get [key]
-echo     ^|^| vanguard-config static list
+echo     ^|^| fn-config [function] [key?] [value?]
+echo     ^|^| fn-config get [key]
+echo     ^|^| fn-config list
+echo     ^|^| fn-config set [key] [value]
+echo     ^|^| fn-config del [key]
+echo     ^|^| fn-config new
+echo     ^|^| fn-config static get [key]
+echo     ^|^| fn-config static list
 echo   Options:
 echo     ^|^| function: get ^| list ^| set ^| del ^| new
 echo   What:
