@@ -1,0 +1,4 @@
+db-data/
+*.sql
+diff_*
+summary.txt
