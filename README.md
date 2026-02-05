@@ -1,6 +1,7 @@
 # LazyPolyRepoExpress
 For public usage:
 - Fork the repository
+
 For private usage:
 - First, visit https://github.com/new/import
 - Then, set the URL to https://github.com/considera-core/LazyPolyRepoExpress.git
