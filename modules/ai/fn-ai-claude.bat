@@ -23,7 +23,7 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD AI: Claude Code for %tenant%/%project%]
+    ECHO [LPRE AI: Claude Code for %tenant%/%project%]
     CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (

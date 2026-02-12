@@ -12,7 +12,7 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD GIT BRANCHES: %tenant%/%project%]
+    ECHO [LPRE GIT BRANCHES: %tenant%/%project%]
     CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     CALL git -C "%SELECTED_TENANT_ROOT%/%FOUND_NAME%" "recent-branches"

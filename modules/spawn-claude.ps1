@@ -27,13 +27,13 @@ if (!(Test-Path $projectPath)) {
 echo "  [spawn-claude/INFO] Project path: $projectPath"
 Set-Location $projectPath
 
-# Launch Claude Code
+# Launch Claude Code interactively, persisting in the terminal
 if ($Command) {
     echo "  [spawn-claude/INFO] Launching Claude Code with command: $Command"
-    Start-Process -NoNewWindow -FilePath "claude" -ArgumentList $Command
+    & "claude" $Command
 } else {
     echo "  [spawn-claude/INFO] Launching Claude Code..."
-    Start-Process -NoNewWindow -FilePath "claude"
+    & "claude"
 }
 
 echo "  [spawn-claude/INFO] Claude Code launched in background"

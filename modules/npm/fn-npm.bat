@@ -20,7 +20,7 @@ CALL :FN
 EXIT /B %ERRORLEVEL%
 
 :FN
-    ECHO [VANGUARD NPM: %tenant%/%project%]
+    ECHO [LPRE NPM: %tenant%/%project%]
     ECHO -^> Running npm %full%
 
     CALL fn-findTenantRoot "%tenant%"

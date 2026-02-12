@@ -43,7 +43,7 @@ CALL :FN
 EXIT /B %ERRORLEVEL%
 
 :FN
-    ECHO [VANGUARD GIT: %tenant%/%project%]
+    ECHO [LPRE GIT: %tenant%/%project%]
     ECHO -^> Running git "%full%"
 
     CALL fn-findTenantRoot "%tenant%"

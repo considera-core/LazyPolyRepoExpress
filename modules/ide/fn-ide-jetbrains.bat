@@ -12,7 +12,7 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD IDE JETBRAINS: %tenant%/%project%]
+    ECHO [LPRE IDE JETBRAINS: %tenant%/%project%]
     CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (

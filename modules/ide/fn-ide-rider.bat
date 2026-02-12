@@ -5,7 +5,7 @@
 SET "tenant=%~1"
 SET "project=%~2"
 IF NOT DEFINED project (
-    ECHO [VANGUARD IDE RIDER: %tenant%/*]
+    ECHO [LPRE IDE RIDER: %tenant%/*]
     CALL fn-forEachAlias "%tenant%" fn-ide-rider
     EXIT /B 0
 )
@@ -13,7 +13,7 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD IDE RIDER: %tenant%/%project%]
+    ECHO [LPRE IDE RIDER: %tenant%/%project%]
     CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (

@@ -31,14 +31,14 @@ IF /I "%module%" == "help" (
 CALL fn-bootstrap "%script_name%"
 IF ERRORLEVEL 1 EXIT /B 1
 
-IF NOT DEFINED action (
-    ECHO [ERROR] Missing action
-    ECHO   Actions: branch ^| branches ^| pull ^| home ^| story ^<storyId^>
-    ECHO   For help: %script_name% help
-    EXIT /B 1
-)
-
 IF /I "%module%" == "git" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: branch ^| branches ^| pull ^| home ^| story ^<storyId^>
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
     :: fn-git-branch <tenant> <project>
     IF /I "%action%"=="branch" (
         CALL fn-git-branch "%tenant%" "%arg1%"
@@ -70,11 +70,18 @@ IF /I "%module%" == "git" (
     )
 
     ECHO [ERROR] Unknown git action "%action%"
-    ECHO         Actions: branch ^| branches ^| pull ^| home ^| story ^<storyId^>
+    ECHO    Actions: branch ^| branches ^| pull ^| home ^| story ^<storyId^>
     EXIT /B 0
 )
 
 IF /I "%module%"=="app" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: run ^| launch ^| validate
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
     :: fn-app-run <tenant> <app>
     IF /I "%action%"=="run" (
         CALL fn-app-run "%tenant%" "%arg1%"
@@ -95,11 +102,18 @@ IF /I "%module%"=="app" (
     )
 
     ECHO [ERROR] Unknown app action "%action%"
-    ECHO         Actions: run ^| launch ^| validate
+    ECHO   Actions: run ^| launch ^| validate
     EXIT /B 0
 )
 
 IF /I "%module%"=="ide" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: rider ^| webstorm ^| jetbrains ^| code ^| riderDebug
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
     :: fn-ide-rider <tenant> <project>
     IF /I "%action%"=="rider" (
         CALL fn-ide-rider "%tenant%" "%arg1%"
@@ -124,12 +138,25 @@ IF /I "%module%"=="ide" (
         EXIT /B %ERRORLEVEL%
     )
 
+    :: fn-ide-riderDebug <tenant> <project>
+    IF /I "%action%"=="riderDebug" (
+        CALL fn-ide-riderDebug "%tenant%" "%arg1%"
+        EXIT /B %ERRORLEVEL%
+    )
+
     ECHO [ERROR] Unknown ide action "%action%"
-    ECHO         Actions: rider ^| webstorm ^| jetbrains ^| code
+    ECHO   Actions: rider ^| webstorm ^| jetbrains ^| code ^| riderDebug
     EXIT /B 0
 )
 
 IF /I "%module%"=="web" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: repo ^| tags ^| actions ^| app
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
     :: fn-web-repo <tenant> <project>
     IF /I "%action%"=="repo" (
         CALL fn-web-repo "%tenant%" "%arg1%"
@@ -154,23 +181,59 @@ IF /I "%module%"=="web" (
         EXIT /B %ERRORLEVEL%
     )
 
+    ECHO [ERROR] Unknown web action "%action%"
+    ECHO   Actions: repo ^| tags ^| actions ^| app
     EXIT /B 0
 )
 
 IF /I "%module%"=="ai" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: claude
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
     :: fn-ai-claude <tenant> <command> <project>
     IF /I "%action%"=="claude" (
         CALL fn-ai-claude "%tenant%" "%arg1%" "%arg2%"
         EXIT /B %ERRORLEVEL%
     )
 
+    ECHO [ERROR] Unknown ai action "%action%"
+    ECHO   Actions: claude
+    EXIT /B 0
+)
+
+IF /I "%module%"=="npm" (
+    :: fn-npm <tenant> <project> <command>
+    CALL fn-npm "%tenant%" "%action%" "%arg1%"
+    EXIT /B %ERRORLEVEL%
+)
+
+IF /I "%module%"=="aws" (
+    IF NOT DEFINED action (
+        ECHO [ERROR] Missing action
+        ECHO   Actions: profile
+        ECHO   For help: %script_name% help
+        EXIT /B 1
+    )
+
+    :: fn-aws-profile <tenant>
+    IF /I "%action%"=="profile" (
+        CALL fn-aws-profile "%tenant%"
+        EXIT /B %ERRORLEVEL%
+    )
+
+    ECHO [ERROR] Unknown aws action "%action%"
+    ECHO   Actions: profile
     EXIT /B 0
 )
 
 IF /I "%module%"=="module" (
     ECHO [INFO] Listing modules
     ECHO   Usage: %script_name% [flags] ^<module^> ^<action^> [args...]
-    ECHO   Modules: git ^| app ^| ide ^| web ^| help
+    ECHO   Modules: git ^| app ^| ide ^| web ^| aws ^| ai ^| npm ^| help
     ECHO   For help: %script_name% help
     EXIT /B 0
 )
@@ -178,7 +241,7 @@ IF /I "%module%"=="module" (
 IF /I "%module%"=="modules" (
     ECHO [INFO] Listing modules
     ECHO   Usage: %script_name% [flags] ^<module^> ^<action^> [args...]
-    ECHO   Modules: git ^| app ^| ide ^| web ^| help
+    ECHO   Modules: git ^| app ^| ide ^| web ^| aws ^| ai ^| npm ^| help
     ECHO   For help: %script_name% help
     EXIT /B 0
 )
@@ -186,13 +249,13 @@ IF /I "%module%"=="modules" (
 :MODULE_FAIL
     ECHO [ERROR] Missing module
     ECHO   Usage: %script_name% [flags] ^<module^> ^<action^> [args...]
-    ECHO   Modules: git ^| app ^| ide ^| web ^| help
+    ECHO   Modules: git ^| app ^| ide ^| web ^| aws ^| ai ^| npm ^| help
     ECHO   For help: %script_name% help
     ECHO.
     EXIT /B 0
 
 :HELP
-    echo [VANGUARD HELP: %tenant%]
+    echo [LPRE HELP: %tenant%]
     echo.
     echo     [USAGE]
     ::echo       %script_name% [flags] ^<module^> ^<action^> [args...]
@@ -206,6 +269,8 @@ IF /I "%module%"=="modules" (
     echo       app                                             App-level workflows (run/validate).
     echo       ide                                             Open projects in IDEs.
     echo       web                                             Open web resources (repo/tags/actions/app URL).
+    echo       aws                                             AWS configuration and profile management.
+    echo       npm                                             Node.js package management.
     echo.
     echo     [GIT MODULE]
     echo       %script_name% git branch   ^<project^>                   Show current branch for a project
@@ -224,12 +289,19 @@ IF /I "%module%"=="modules" (
     echo       %script_name% ide webstorm ^<project^>                   Open project in WebStorm
     echo       %script_name% ide code     ^<project^>                   Open project in VS Code
     echo       %script_name% ide jetbrains ^<project^>                  Open client in WebStorm, server in Rider
+    echo       %script_name% ide riderDebug ^<project^>                 Attach Rider debugger to running .dll process
     echo.
     echo     [WEB MODULE]
     echo       %script_name% web repo     ^<project^>                   Open GitHub repo page
     echo       %script_name% web tags     ^<project^>                   Open GitHub tags page
     echo       %script_name% web actions  ^<project^>                   Open GitHub actions page
     echo       %script_name% web app      ^<app^> [env?]                Open app URL (env defaults to local)
+    echo.
+    echo     [AWS MODULE]
+    echo       %script_name% aws profile  ^<profile-name^>              Set AWS_PROFILE environment variable
+    echo.
+    echo     [NPM MODULE]
+    echo       %script_name% npm <tenant> <project> <command>           Node.js package management
     echo.
     echo     [TERMS]
     echo       project                                         Repo alias from this tenant's ^<tenant^>.csv (example: citizen, admin, api)
@@ -243,7 +315,6 @@ IF /I "%module%"=="modules" (
     echo       - %script_name% app run citizen
     echo       - %script_name% web app citizen qa
     echo       - %script_name% ide jetbrains admin
-    ::echo       - %script_name% -v app validate
     echo.
     echo     [NOTES]
     echo       - This tenant loads repos from %script_name%.csv (or equivalent). Aliases differ per tenant.

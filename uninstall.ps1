@@ -29,6 +29,7 @@ if (Test-Path -Path "$LPRE_SYM_PATH" -PathType Container) {
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesGit
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesIde
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesNpm
+    RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesAws
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Tenants
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/TenantsDispatch
 } else {

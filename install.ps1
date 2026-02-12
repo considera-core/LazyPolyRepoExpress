@@ -123,6 +123,10 @@ Verify-PathAddition `
     -TargetPath (Join-Path $REPO_PATH "modules\npm")
 
 Verify-PathAddition `
+    -LinkPath (Join-Path $SYM_PATH "ModulesAws") `
+    -TargetPath (Join-Path $REPO_PATH "modules\aws")
+
+Verify-PathAddition `
     -LinkPath (Join-Path $SYM_PATH "Tenants") `
     -TargetPath (Join-Path $REPO_PATH "tenants")
 

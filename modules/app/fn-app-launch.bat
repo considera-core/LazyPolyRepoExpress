@@ -13,7 +13,7 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD LAUNCH: %tenant%/%project%]
+    ECHO [LPRE LAUNCH: %tenant%/%project%]
     CALL fn-findTenantRoot "%tenant%"
     CALL fn-findProjectByAlias "%project%"
     IF ERRORLEVEL 1 (
