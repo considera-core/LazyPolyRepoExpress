@@ -13,15 +13,10 @@ CALL :FN
 EXIT /B 0
 
 :FN
-    ECHO [VANGUARD RUN: %tenant%/%app%]
+    ECHO [LPRE RUN: %tenant%/%app%]
     CALL fn-findTenantRoot "%tenant%"
     ECHO   [INFO] Running %app%...
     CALL fn-app-launch "%tenant%" "%app%"
     CALL fn-app-launch "%tenant%" "api"
     CALL fn-app-launch "%tenant%" "public-api"
-    IF /I "%FOUND_TYPE%"=="bff" (
-        CALL spawn-bff-window "%tenant%" "%FOUND_NAME%" "%here%"
-    ) else (
-        CALL spawn-api-window "%tenant%" "%FOUND_NAME%" "%here%"
-    )
     EXIT /B 0

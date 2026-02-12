@@ -1,0 +1,4 @@
+alias,name,label,type,client,server,home
+example-bff,example-web-app,ExampleWebApp,bff,example-web-app/client,example-web-app,main
+example-api,example-api,ExampleApi,api,,example-api,master
+example-lambda,example-lambda-function,ExampleLambda,lambda,,example-lambda-function,main
