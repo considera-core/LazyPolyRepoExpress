@@ -1,4 +1,4 @@
-# LazyPolyRepoExpress
+# LazyPolyRepoExpress / LePREchaun
 
 A command-line framework for managing multiple related repositories (poly-repo) with ease.
 
