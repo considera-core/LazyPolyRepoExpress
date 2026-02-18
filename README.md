@@ -3,7 +3,7 @@
 A command-line framework for managing multiple related repositories (poly-repo) with ease.
 
 ## Quick Links
-
+**_These guides are written by Claude, I need to manually simplify them at some point._**
 - **New to setup?** → [Quick Start Guide](tenants/QUICK_START.md) (5 minutes)
 - **Need details?** → [Complete Tenant Setup Guide](TENANT_SETUP_GUIDE.md)
 - **Using existing tenants?** → [Tenants Directory](tenants/README.md)
