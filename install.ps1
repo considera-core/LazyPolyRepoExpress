@@ -150,11 +150,10 @@ Write-Host ""
 
 Write-Host "Testing org commands..."
 Write-Host "If they do not work, restart your terminal and run this script again."
+Write-Host "Comment these lines out after verifying if you don't want the config to be re-set"
 
 fn-config new
 fn-config set Username $env:USERNAME
 fn-config set RootRepoPath $REPO_PATH
 fn-config set RootSymLinksPath $SYM_PATH
 sample-org hello
-
-Write-Host "If they did not work, restart your terminal and run this script again."
