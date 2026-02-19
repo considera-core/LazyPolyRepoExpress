@@ -95,6 +95,10 @@ Verify-PathAddition `
     -TargetPath (Join-Path $REPO_PATH "config")
 
 Verify-PathAddition `
+    -LinkPath (Join-Path $SYM_PATH "Docker") `
+    -TargetPath (Join-Path $REPO_PATH "docker")
+
+Verify-PathAddition `
     -LinkPath (Join-Path $SYM_PATH "Modules") `
     -TargetPath (Join-Path $REPO_PATH "modules")
 
@@ -121,6 +125,10 @@ Verify-PathAddition `
 Verify-PathAddition `
     -LinkPath (Join-Path $SYM_PATH "ModulesNpm") `
     -TargetPath (Join-Path $REPO_PATH "modules\npm")
+
+Verify-PathAddition `
+    -LinkPath (Join-Path $SYM_PATH "ModulesNpx") `
+    -TargetPath (Join-Path $REPO_PATH "modules\npx")
 
 Verify-PathAddition `
     -LinkPath (Join-Path $SYM_PATH "ModulesAws") `

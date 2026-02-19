@@ -22,6 +22,7 @@ if (Test-Path -Path "$LPRE_SYM_PATH" -PathType Container) {
     echo "Removing symbolic links for script paths..."
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Root
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Config
+    RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Docker
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Modules
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesAi
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesApp
@@ -29,6 +30,7 @@ if (Test-Path -Path "$LPRE_SYM_PATH" -PathType Container) {
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesGit
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesIde
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesNpm
+    RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesNpx
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/ModulesAws
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/Tenants
     RemoveSymbolicLink -linkPath $LPRE_SYM_PATH/TenantsDispatch

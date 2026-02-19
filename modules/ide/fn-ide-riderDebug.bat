@@ -24,7 +24,7 @@ EXIT /B 0
     ECHO   [INFO] Searching for running process for %FOUND_LABEL% (%FOUND_NAME%)...
 
     :: Look for dotnet.exe processes running a .dll from this project
-    SET "project_path=%REPO_ROOT_PATH%\%TENANT%\%FOUND_NAME%"
+    SET "project_path=%SELECTED_TENANT_ROOT%\%FOUND_NAME%"
     SET "found_pid="
 
     :: Use WMIC to find dotnet.exe processes with command line containing the project name

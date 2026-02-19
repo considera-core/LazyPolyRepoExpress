@@ -20,7 +20,7 @@ EXIT /B 0
         EXIT /B 1
     )
     ECHO   [INFO] Opening %FOUND_LABEL% (%FOUND_NAME%) in JetBrains WebStorm...
-    CD "%REPO_ROOT_PATH%"/%TENANT%/%FOUND_NAME%/%FOUND_NAME%/client/
+    CD %SELECTED_TENANT_ROOT%/%FOUND_NAME%/%FOUND_NAME%/client/
     START "" "webstorm64.exe" . >NUL 2>&1
     IF ERRORLEVEL 1 (
         ECHO   [ERROR] Failed to launch JetBrains WebStorm. Make sure you add the webstorm64.exe's bin directory to your system/user PATH and then refresh your terminal.

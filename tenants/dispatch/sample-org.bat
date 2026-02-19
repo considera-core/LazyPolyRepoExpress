@@ -20,6 +20,7 @@ IF /I "%project%"=="sample-tenant" (
     SET "arg1=%action%"
     SET "action=%module%"
     SET "module=%project%"
+    :: Call all projects
     CALL sample-tenant "!module!" "!action!" "!arg1!" "!arg2!"
     EXIT /B 0
 )
