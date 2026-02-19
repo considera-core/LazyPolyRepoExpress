@@ -8,9 +8,19 @@ A command-line framework for managing multiple related repositories (poly-repo) 
 - **Need details?** → [Complete Tenant Setup Guide](TENANT_SETUP_GUIDE.md)
 - **Using existing tenants?** → [Tenants Directory](tenants/README.md)
 
-## What is LazyPolyRepoExpress?
+## Quick Roadmap
+- **_Bash variant_**
+- More control over launching and running apps (including support for Java and other langs)
+- Multi-organization support
+- Code-coverage tools
+- Jira / Atlassian CLI support (to pipe with `ai claude` and `git story`)
+- Fix and expand the `ai` module, claude currently doesn't contain its' window state properly.
+- GH Actions for pulling the latest upstream commits (for private forks)
+- More actions for all of the IDEs, and more IDEs to support
 
-LazyPolyRepoExpress helps you manage multiple related projects (tenants) where each tenant contains multiple modules (repositories). It provides:
+## What is LePREchaun?
+
+LePREchaun helps you manage multiple related projects (tenants) where each tenant contains multiple modules (repositories). It provides:
 
 - **CSV-based configuration** for module definitions
 - **Batch dispatchers** for routing commands to modules
@@ -19,7 +29,7 @@ LazyPolyRepoExpress helps you manage multiple related projects (tenants) where e
 
 ## Getting Started
 
-### Setting Up LazyPolyRepoExpress
+### Setting Up LePREchaun
 
 **For public usage:**
 - Fork the repository
@@ -33,7 +43,7 @@ LazyPolyRepoExpress helps you manage multiple related projects (tenants) where e
 - Add upstream remote to sync with the root repository: git remote add upstream https://github.com/considera-core/LazyPolyRepoExpress.git
 - Verify: git remote -v
 - Fetch: git fetch upstream
-- Any changes in the upstream master are highly recommended to be merged into your origin master
+- Any changes in the upstream master are highly recommended to be merged into your origin master.
 
 ### Adding Your First Tenant
 
