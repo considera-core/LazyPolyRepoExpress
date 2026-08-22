@@ -1,0 +1,8 @@
+# NAME|INPUT|RC|EXPECT
+# Absent ORG or SUITE means fan out; inactive suites are skipped.
+all-orgs-resolves-active-suite|leprechaun app launch -d|0|org=considera suite=consideraweb
+all-suites-for-org|Considera app launch -d|0|suite=consideraweb
+inactive-suite-skipped|Considera app launch -d|0|suite=consideraweb
+single-project-base-case|ConsideraWeb api app launch -d|0|LPRE:EXEC fn=FnAppLaunch suite=consideraweb project=api
+selected-projects-forwarded|ConsideraWeb app launch -p api bff -d|0|LPRE:EXEC fn=FnAppLaunch suite=consideraweb project= args= projects=api bff
+all-projects-no-selection|ConsideraWeb app launch -d|0|LPRE:EXEC fn=FnAppLaunch suite=consideraweb project= args= projects=

@@ -1,0 +1,9 @@
+# NAME|INPUT|RC|EXPECT
+# No positional is a known module, so these route to the External schema.
+suite-external|ConsideraWeb proxy start -d|0|LPRE:EXTERNAL suite=consideraweb project=proxy command=start
+suite-external-cli|ConsideraWeb cli hello -d|0|project=cli command=hello
+org-external|Considera consideraweb proxy start -d|0|project=proxy command=start
+global-external|leprechaun considera consideraweb proxy start -d|0|project=proxy command=start
+org-external-all-suites|Considera start -d|0|LPRE:EXTERNAL suite=consideraweb
+internal-project-rejected|ConsideraWeb api start -d|1|is not external
+unknown-project-rejected|ConsideraWeb nosuchthing start -d|1|Unknown module or project

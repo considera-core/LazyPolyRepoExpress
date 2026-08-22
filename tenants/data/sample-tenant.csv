@@ -1,3 +1,0 @@
-alias,name,label,type,client,server,home
-sample-bff,SampleBff,Sample BFF,bff,SampleBffClient,SampleBffServer,master
-sample-api,SampleApi,Sample API,api, ,SampleApiServer,main

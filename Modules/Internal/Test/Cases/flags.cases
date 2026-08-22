@@ -1,0 +1,13 @@
+# NAME|INPUT|RC|EXPECT
+# -p and -a are list flags: they consume tokens until the next flag.
+projects-one|ConsideraWeb app launch -p api -d|0|projects=api
+projects-many|ConsideraWeb app launch -p api bff client -d|0|projects=api bff client
+projects-long-form|ConsideraWeb app launch --projects api bff -d|0|projects=api bff
+projects-stops-at-flag|ConsideraWeb app launch -p api bff -v -d|0|projects=api bff flags=-v -d
+args-one|ConsideraWeb app run -a web -d|0|args=web
+args-many|ConsideraWeb app run -a web admin -d|0|args=web admin
+args-positional|ConsideraWeb app run web -d|0|args=web
+args-positional-many|ConsideraWeb app run web admin -d|0|args=web admin
+flags-order-independent|ConsideraWeb app launch -d -v -p api|0|projects=api
+verbose-long-form|ConsideraWeb app launch --verbose -d|0|flags=--verbose -d
+passthru-both|ConsideraWeb app launch -v -d|0|flags=-v -d

@@ -1,0 +1,11 @@
+# NAME|INPUT|RC|EXPECT
+unknown-module|ConsideraWeb nosuchmodule run -d|1|Unknown module or project
+unknown-action|ConsideraWeb app nosuchaction -d|1|Unknown app action
+missing-action|ConsideraWeb app -d|1|Missing action after module
+projects-flag-no-value|ConsideraWeb app launch -p -d|1|requires at least one value
+inline-project-with-p|ConsideraWeb api app launch -p bff -d|1|cannot be combined with -p
+too-many-positionals|leprechaun considera consideraweb api extra app launch -d|1|Too many positional arguments
+unknown-suite|Considera nosuchsuite app launch -d|1|Unknown suite
+unknown-org|leprechaun nosuchorg app launch -d|1|Unknown organization
+unknown-project-inline|ConsideraWeb nosuchproject app launch -d|1|Unknown project
+unknown-project-in-p|ConsideraWeb app launch -p api nosuchproject -d|1|Unknown project

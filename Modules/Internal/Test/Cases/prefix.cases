@@ -1,0 +1,13 @@
+# NAME|INPUT|RC|EXPECT
+# Prefix length is what assigns ORG / SUITE / PROJECT, per entry depth.
+suite-prefix-0|ConsideraWeb app launch -d|0|org=considera suite=consideraweb project=
+suite-prefix-1|ConsideraWeb api app launch -d|0|project=api
+suite-prefix-2-rejected|ConsideraWeb considera api app launch -d|1|Too many positional arguments
+org-prefix-0|Considera app launch -d|0|suite=consideraweb
+org-prefix-1|Considera consideraweb app launch -d|0|suite=consideraweb project=
+org-prefix-2|Considera consideraweb api app launch -d|0|suite=consideraweb project=api
+org-prefix-3-rejected|Considera considera consideraweb api app launch -d|1|Too many positional arguments
+global-prefix-1|leprechaun considera app launch -d|0|org=considera suite=consideraweb
+global-prefix-2|leprechaun considera consideraweb app launch -d|0|org=considera suite=consideraweb project=
+global-prefix-3|leprechaun considera consideraweb api app launch -d|0|project=api
+global-prefix-4-rejected|leprechaun considera consideraweb api extra app launch -d|1|Too many positional arguments

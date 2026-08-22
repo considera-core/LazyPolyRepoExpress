@@ -130,6 +130,26 @@ Verify-PathAddition `
     -LinkPath (Join-Path $SYM_PATH "TenantsDispatch") `
     -TargetPath (Join-Path $REPO_PATH "tenants\dispatch")
 
+# =========================
+# v2 entry points and modules
+# =========================
+# The v2 tree resolves commands by name off PATH, so every module directory has
+# to be reachable: Fn<Module>Dispatch, the leaf Fn<Module><Action> scripts and
+# the Etc helpers are all looked up that way.
+
+$V2_PATH = Join-Path $REPO_PATH "tenants\data\v2"
+
+Verify-PathAddition `
+    -LinkPath (Join-Path $SYM_PATH "V2Dispatch") `
+    -TargetPath (Join-Path $V2_PATH "Dispatch")
+
+$V2_MODULES = Join-Path $V2_PATH "Modules\Internal"
+foreach ($moduleDir in Get-ChildItem -Path $V2_MODULES -Directory) {
+    Verify-PathAddition `
+        -LinkPath (Join-Path $SYM_PATH ("V2Module" + $moduleDir.Name)) `
+        -TargetPath $moduleDir.FullName
+}
+
 Write-Host ""
 
 # =========================
@@ -144,5 +164,6 @@ fn-config set Username $env:USERNAME
 fn-config set RootRepoPath $REPO_PATH
 fn-config set RootSymLinksPath $SYM_PATH
 sample-org hello
+ConsideraWeb test run
 
 Write-Host "If they did not work, restart your terminal and run this script again."

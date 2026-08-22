@@ -1,0 +1,19 @@
+# NAME|INPUT|RC|EXPECT
+# EXPECT starting with ! asserts absence.
+# The ai module, the first converted leaf. These exercise the leaf itself
+# rather than stopping at the dispatcher, since FnAiClaude now exists.
+base-case|ConsideraWeb api ai claude -d|0|LPRE:RUN fn=FnAiClaude suite=consideraweb project=api
+base-case-resolves-path|ConsideraWeb api ai claude -d|0|ConsideraWeb.Api
+prompt-positional|ConsideraWeb api ai claude fix the bug -d|0|prompt=fix the bug
+prompt-via-a|ConsideraWeb api ai claude -a fix the bug -d|0|prompt=fix the bug
+here-flag-forwarded|ConsideraWeb api ai claude --here -d|0|flags=--here -d
+# No project: the leaf fans out through FnEtcForEachProject and re-enters once
+# per internal project, so one invocation reports many.
+all-projects-fans-out|ConsideraWeb ai claude -d|0|project=api
+all-projects-reaches-last|ConsideraWeb ai claude -d|0|project=unity-workspace
+all-projects-skips-external|ConsideraWeb ai claude -d|0|!project=proxy
+selected-projects|ConsideraWeb ai claude -p api bff -d|0|project=bff
+selected-single|ConsideraWeb ai claude -p mcp -d|0|project=mcp
+selected-excludes-others|ConsideraWeb ai claude -p mcp -d|0|!project=api
+prompt-survives-fanout|ConsideraWeb ai claude -p api bff -a hello -d|0|prompt=hello
+unknown-project-rejected|ConsideraWeb ai claude -p nosuchproject -d|1|Unknown project

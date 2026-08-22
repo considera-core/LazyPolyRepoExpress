@@ -1,0 +1,14 @@
+# NAME|INPUT|RC|EXPECT
+# The nine example invocations from Docs.md, asserted against the -d contract.
+global-one-project|leprechaun considera consideraweb api app launch -v -d|0|LPRE:RESOLVE org=considera suite=consideraweb project=api module=app action=launch
+global-select-projects|leprechaun considera consideraweb app launch -p api bff -v -d|0|project= module=app action=launch args= projects=api bff
+suite-select-projects|ConsideraWeb app launch -p api bff -v -d|0|org=considera suite=consideraweb project= module=app action=launch
+suite-args-via-a|ConsideraWeb app run -a web -v -d|0|module=app action=run args=web
+org-select-projects|Considera consideraweb app launch -p api bff -v -d|0|org=considera suite=consideraweb project= module=app action=launch
+org-all-suites|Considera git branch -v -d|0|module=git action=branch
+org-hyphenated-action|Considera consideraweb git refresh-dependabot -d|0|action=refresh-dependabot
+suite-one-project-test|ConsideraWeb api test run -v -d|0|project=api module=test action=run
+global-all-orgs|leprechaun git home -d|0|module=git action=home
+# The resolved leaf keeps its declared casing rather than the typed casing.
+fn-name-casing|ConsideraWeb app launch -d|0|LPRE:EXEC fn=FnAppLaunch
+fn-name-hyphen-stripped|Considera consideraweb git refresh-dependabot -d|0|fn=FnGitRefreshDependabot

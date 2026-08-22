@@ -1,0 +1,11 @@
+# NAME|INPUT|RC|EXPECT
+# Data invariants the grammar depends on. These read the CSVs directly rather
+# than going through dispatch.
+suite-ids-unique|FnTestAssert suite-ids-unique|0|suite-ids-unique ok
+org-dirs-exist|FnTestAssert org-dirs|0|org-dirs ok
+suite-dirs-exist|FnTestAssert suite-dirs|0|suite-dirs ok
+module-definitions-resolve|FnTestAssert module-definitions|0|module-definitions ok
+app-definitions-resolve|FnTestAssert app-definitions|0|app-definitions ok
+no-action-project-collisions|FnTestAssert action-collisions|0|action-collisions ok
+unknown-check-rejected|FnTestAssert nosuchcheck|1|Unknown check
+active-suites-scaffolded|FnTestAssert active-suites-scaffolded|0|active-suites-scaffolded ok
