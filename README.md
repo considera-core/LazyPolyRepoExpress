@@ -1,5 +1,7 @@
 # LazyPolyRepoExpress / LePREchaun
 
+<img src="leprechaun.png" width="128" alt="Crazy dumb AI leprechaun boi">
+
 A command-line framework for managing multiple related repositories (poly-repo) with ease.
 
 ## Quick Links
