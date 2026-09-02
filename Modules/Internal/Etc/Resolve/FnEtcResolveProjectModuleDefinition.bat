@@ -1,75 +1,69 @@
-:: FnEtcResolveProjectModuleDefinition <SuiteId> <ProjectId> <ModuleId> <Flags...>
-:: leprechaun function resolve ProjectModuleDefinition <SuiteId> <ProjectId> <ModuleId> <Flags...>
-:: -- Resolves a suite project module definition from the data store, and exports:
-:: --   GLOBAL_ResolvedProjectModuleDefinitionModuleId              (ModuleCommandIdentifier) command identifier
-:: --   GLOBAL_ResolvedProjectModuleDefinitionProjectId             (ProjectCommandIdentifier) command identifier
+:: FnEtcResolveProjectModuleDefinition <SuiteId> <ProjectId> <ModuleId> <Flag[]>
+:: leprechaun function resolve ProjectModuleDefinition <SuiteId> <ProjectId> <ModuleId>
+:: -- Checks that a project declares a module, and exports:
+:: --   GLOBAL_ResolvedProjectModuleDefinitionModuleId   (ModuleIdentifier) module identifier
+:: --   GLOBAL_ResolvedProjectModuleDefinitionProjectId  (ProjectIdentifier) project identifier
 :: -- Flags:
-:: --   --refresh:                                                  (GLOBAL_FlagRefresh) forces a reload of the project module data, even if it was already loaded in this scope
-:: --   --fuck:                                                     (GLOBAL_FlagOrg) resolves the project suite's organization and exports:
-:: --     GLOBAL_ResolvedProjectModuleDefinitionOrgId               (FK) owning organization command identifier
-:: --     GLOBAL_ResolvedProjectModuleDefinitionSuiteId             (FK) owning suite command identifier
+:: --   --refresh: resolve again even when this pair is already in scope
+:: --
+:: -- This is what keeps "unity" from running against a dotnet API: a module is
+:: -- dispatchable against a project only if Modules.Definitions.csv says so.
+:: --
+:: -- NOTE: Locals are Export_ rather than Function_ on purpose. With no SETLOCAL,
+:: --       a Function_ name here would be the CALLER's variable, and clearing one
+:: --       on the way out would blank it under them.
+:: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_Resolved values.
 
 @ECHO OFF
 
-SET "Function_SuiteId=%~1"
-SET "Function_ProjectId=%~2"
-SET "Function_ModuleId=%~3"
+SET "Export_SuiteId=%~1"
+SET "Export_ProjectId=%~2"
+SET "Export_ModuleId=%~3"
 
-CALL leprechaun function flags %*
-SET "Local_FlagRefresh=%GLOBAL_FlagRefresh%"
-SET "Local_FlagFuck=%GLOBAL_FlagFuck%"
-
-IF NOT DEFINED Function_SuiteId (
-    CALL leprechaun function log error FnEtcResolveProjectModuleDefinition "Missing required argument ^<SuiteId^>"
-    GOTO Destructor 1
+IF NOT DEFINED Export_SuiteId (
+    CALL FnEtcLogError FnEtcResolveProjectModuleDefinition "Missing required argument <SuiteId>"
+    EXIT /B 1
 )
 
-IF NOT DEFINED Function_ProjectId (
-    CALL leprechaun function log error FnEtcResolveProjectModuleDefinition "Missing required argument ^<ProjectId^>"
-    GOTO Destructor 1
+IF NOT DEFINED Export_ProjectId (
+    CALL FnEtcLogError FnEtcResolveProjectModuleDefinition "Missing required argument <ProjectId>"
+    EXIT /B 1
 )
 
-IF NOT DEFINED Function_ModuleId (
-    CALL leprechaun function log error FnEtcResolveProjectModuleDefinition "Missing required argument ^<ModuleId^>"
-    GOTO Destructor 1
+IF NOT DEFINED Export_ModuleId (
+    CALL FnEtcLogError FnEtcResolveProjectModuleDefinition "Missing required argument <ModuleId>"
+    EXIT /B 1
 )
 
-IF /I "%GLOBAL_ResolvedProjectModuleDefinitionModuleId%"=="%Function_ModuleId%" (
-    IF NOT DEFINED Local_FlagRefresh GOTO Destructor 0
-)
+CALL FnEtcFlags %*
 
 SET "GLOBAL_ResolvedProjectModuleDefinitionModuleId="
 SET "GLOBAL_ResolvedProjectModuleDefinitionProjectId="
-SET "GLOBAL_ResolvedProjectModuleDefinitionOrgId="
-SET "GLOBAL_ResolvedProjectModuleDefinitionSuiteId="
 
-CALL leprechaun function data ProjectModuleDefinitions "%Function_SuiteId%" "%Function_ProjectId%"
-IF ERRORLEVEL 1 GOTO Destructor 1
+CALL FnEtcDataProjectModuleDefinitions "%Export_SuiteId%"
+IF ERRORLEVEL 1 EXIT /B 1
 
-FOR %%M IN (%GLOBAL_DataProjectModuleDefinitions%) DO (
-    IF DEFINED GLOBAL_ResolvedProjectModuleDefinitionModuleId EXIT /B 0
+:: The reader exports one list per project, so the membership test is a lookup
+:: rather than a scan over every pair in the suite.
+CALL SET "Local_ProjectModules=%%GLOBAL_DataProjectModules_%Export_ProjectId%%%"
+IF DEFINED Local_ProjectModules SET "Local_ProjectModules=%Local_ProjectModules:~1%"
 
-    IF /I "%%M"=="<%Function_ProjectId%,%Function_ModuleId%>" (
-        SET "GLOBAL_ResolvedProjectModuleDefinitionModuleId=%Function_ModuleId%"
-        SET "GLOBAL_ResolvedProjectModuleDefinitionProjectId=%Function_ProjectId%"
+FOR %%M IN (%Local_ProjectModules%) DO IF /I "%%M"=="%Export_ModuleId%" SET "GLOBAL_ResolvedProjectModuleDefinitionModuleId=%Export_ModuleId%"
 
-        IF DEFINED GLOBAL_FlagFuck (
-            CALL leprechaun function resolve Suite "%Function_SuiteId%"
-            CALL SET "GLOBAL_ResolvedProjectModuleDefinitionOrgId=%%GLOBAL_ResolvedSuiteOrgId%%"
-            CALL SET "GLOBAL_ResolvedProjectModuleDefinitionSuiteId=%%GLOBAL_ResolvedSuiteId%%"
-            IF ERRORLEVEL 1 (
-                CALL leprechaun function log warning FnEtcResolveProjectModuleDefinition "Failed to resolve suite %Function_SuiteId%"
-            )
-        )
-
-        GOTO Destructor 0
-    )
+IF NOT DEFINED GLOBAL_ResolvedProjectModuleDefinitionModuleId (
+    CALL FnEtcLogError FnEtcResolveProjectModuleDefinition "Project %Export_ProjectId% does not declare the %Export_ModuleId% module"
+    ECHO   Declared: %Local_ProjectModules%
+    SET "Export_SuiteId="
+    SET "Export_ProjectId="
+    SET "Export_ModuleId="
+    SET "Local_ProjectModules="
+    EXIT /B 1
 )
 
-:Destructor
-    SET "Function_SuiteId="
-    SET "Function_ProjectId="
-    SET "Function_ModuleId="
-    SET "Local_FlagRefresh="
-    SET "Local_FlagFuck="
-    EXIT /B %~1
+SET "GLOBAL_ResolvedProjectModuleDefinitionProjectId=%Export_ProjectId%"
+
+SET "Export_SuiteId="
+SET "Export_ProjectId="
+SET "Export_ModuleId="
+SET "Local_ProjectModules="
+EXIT /B 0

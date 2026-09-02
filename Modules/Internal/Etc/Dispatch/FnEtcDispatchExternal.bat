@@ -1,123 +1,198 @@
-:: FnEtcDispatchExternal --entry <global|org|suite> [--org <ORG>] [--suite <SUITE>] <COMMAND...>
-:: -- Handles the External schema from Docs.md, reached when no positional is a
-:: -- known module identifier. External projects (IsExternal=true in Projects.csv)
-:: -- are treated as separate modules with their own set of commands.
+:: FnEtcDispatchExternal <EntryId> <ValueId> <Command...>
+:: leprechaun function dispatch-external <EntryId> <ValueId> <Command...>
+:: -- Reached when no positional named a module. External projects are separate
+:: -- modules with their own commands, so the grammar is shorter than the
+:: -- internal one: there is no ACTION, only a COMMAND the project defines.
 :: --
-:: --   entry  | positionals | meaning
-:: --   global | 4           | ORG SUITE PROJECT COMMAND
-:: --   global | 2           | ORG COMMAND            (all suites)
-:: --   org    | 3           | SUITE PROJECT COMMAND
-:: --   org    | 1           | COMMAND                (all suites)
-:: --   suite  | 2           | PROJECT COMMAND
+:: --   entry        | positionals | meaning
+:: --   Global       | 4           | ORG SUITE PROJECT COMMAND
+:: --   Global       | 2           | ORG COMMAND              (all suites)
+:: --   Organization | 3           | SUITE PROJECT COMMAND
+:: --   Organization | 1           | COMMAND                  (all suites)
+:: --   Suite        | 2           | PROJECT COMMAND
+:: --
+:: -- With no PROJECT the command goes to every external project in the suite.
 
 @ECHO OFF
 SETLOCAL EnableExtensions
+GOTO Constructor
 
-CALL FnEtcFlags %*
-IF ERRORLEVEL 1 EXIT /B 1
+:Main
+    IF /I "%Function_EntryId%"=="Global"       GOTO ShapeGlobal
+    IF /I "%Function_EntryId%"=="Organization" GOTO ShapeOrganization
+    IF /I "%Function_EntryId%"=="Suite"        GOTO ShapeSuite
+    SET "Function_Error=Unknown entry point %Function_EntryId%"
+    GOTO Failure
 
-SET "X_ENTRY=%FLAG_ENTRY%"
-IF NOT DEFINED X_ENTRY SET "X_ENTRY=global"
+:ShapeGlobal
+    IF "%Function_Argc%"=="4" (
+        SET "Function_OrgId=%Function_Arg1%"
+        SET "Function_SuiteId=%Function_Arg2%"
+        SET "Function_ProjectId=%Function_Arg3%"
+        SET "Function_CommandId=%Function_Arg4%"
+        GOTO Shaped
+    )
+    IF "%Function_Argc%"=="2" (
+        SET "Function_OrgId=%Function_Arg1%"
+        SET "Function_CommandId=%Function_Arg2%"
+        GOTO Shaped
+    )
+    GOTO BadShape
 
-SET "X_ORG=%FLAG_ORG%"
-SET "X_SUITE=%FLAG_SUITE%"
-SET "X_PROJECT="
-SET "X_COMMAND="
-SET "X_ARGS=%FLAG_ARGS%"
-SET "X_FLAGS=%FLAG_PASSTHRU%"
-SET "X_ARGC=%FLAG_ARGC%"
+:ShapeOrganization
+    SET "Function_OrgId=%Function_ValueId%"
+    IF "%Function_Argc%"=="3" (
+        SET "Function_SuiteId=%Function_Arg1%"
+        SET "Function_ProjectId=%Function_Arg2%"
+        SET "Function_CommandId=%Function_Arg3%"
+        GOTO Shaped
+    )
+    IF "%Function_Argc%"=="1" (
+        SET "Function_CommandId=%Function_Arg1%"
+        GOTO Shaped
+    )
+    GOTO BadShape
 
-IF /I "%X_ENTRY%"=="suite" GOTO :SHAPE_SUITE
-IF /I "%X_ENTRY%"=="org" GOTO :SHAPE_ORG
-GOTO :SHAPE_GLOBAL
+:ShapeSuite
+    SET "Function_SuiteId=%Function_ValueId%"
+    IF "%Function_Argc%"=="2" (
+        SET "Function_ProjectId=%Function_Arg1%"
+        SET "Function_CommandId=%Function_Arg2%"
+        GOTO Shaped
+    )
+    GOTO BadShape
 
-:SHAPE_SUITE
-    IF NOT "%X_ARGC%"=="2" GOTO :BAD_SHAPE
-    SET "X_PROJECT=%FLAG_ARG_1%"
-    SET "X_COMMAND=%FLAG_ARG_2%"
-    GOTO :SHAPE_DONE
+:Shaped
+    IF NOT DEFINED Function_CommandId GOTO BadShape
 
-:SHAPE_ORG
-    IF "%X_ARGC%"=="1" GOTO :SHAPE_ORG_ALL
-    IF NOT "%X_ARGC%"=="3" GOTO :BAD_SHAPE
-    SET "X_SUITE=%FLAG_ARG_1%"
-    SET "X_PROJECT=%FLAG_ARG_2%"
-    SET "X_COMMAND=%FLAG_ARG_3%"
-    GOTO :SHAPE_DONE
-:SHAPE_ORG_ALL
-    SET "X_COMMAND=%FLAG_ARG_1%"
-    GOTO :SHAPE_DONE
+    IF DEFINED Function_SuiteId (
+        CALL :OneSuite "%Function_SuiteId%"
+        GOTO Destructor
+    )
 
-:SHAPE_GLOBAL
-    IF "%X_ARGC%"=="2" GOTO :SHAPE_GLOBAL_ALL
-    IF NOT "%X_ARGC%"=="4" GOTO :BAD_SHAPE
-    SET "X_ORG=%FLAG_ARG_1%"
-    SET "X_SUITE=%FLAG_ARG_2%"
-    SET "X_PROJECT=%FLAG_ARG_3%"
-    SET "X_COMMAND=%FLAG_ARG_4%"
-    GOTO :SHAPE_DONE
-:SHAPE_GLOBAL_ALL
-    SET "X_ORG=%FLAG_ARG_1%"
-    SET "X_COMMAND=%FLAG_ARG_2%"
-    GOTO :SHAPE_DONE
+    IF NOT DEFINED Function_OrgId GOTO BadShape
 
-:SHAPE_DONE
-    IF NOT DEFINED X_COMMAND GOTO :BAD_SHAPE
-    IF NOT DEFINED X_SUITE GOTO :ALL_SUITES
-    CALL :ONE_SUITE "%X_SUITE%"
+    :: Fanned out here rather than through FnEtcForEachSuite, because the work
+    :: per suite is a subroutine in this file and cannot be reached by name. The
+    :: FOR list is expanded when the line is parsed, so the reads inside the body
+    :: cannot disturb the set being iterated.
+    CALL FnEtcDataSuites "%Function_OrgId%"
+    IF ERRORLEVEL 1 GOTO Failure
+
+    IF NOT DEFINED GLOBAL_DataSuitesActive (
+        SET "Function_Error=No active suites in organization %Function_OrgId%"
+        GOTO Failure
+    )
+
+    FOR %%S IN (%GLOBAL_DataSuitesActive%) DO (
+        CALL :OneSuite "%%S"
+        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    )
+    GOTO Destructor
+
+:BadShape
+    SET "Function_Error=Not a valid command for a %Function_EntryId% entry point"
+    GOTO Failure
+
+:Constructor
+    SET "Function_EntryId=%~1"
+    SET "Function_ValueId=%~2"
+    SET "Function_Command="
+    SET "Function_OrgId="
+    SET "Function_SuiteId="
+    SET "Function_ProjectId="
+    SET "Function_CommandId="
+    SET "Function_Tail="
+    SET "Function_Error="
+    SET "Function_ReturnCode=0"
+
+    SHIFT
+    SHIFT
+    GOTO Collect
+
+:Collect
+    IF [%1]==[] GOTO Collected
+    SET "Function_Command=%Function_Command% %1"
+    SHIFT
+    GOTO Collect
+
+:Collected
+    IF DEFINED Function_Command SET "Function_Command=%Function_Command:~1%"
+    GOTO Validate
+
+:Validate
+    IF NOT DEFINED Function_EntryId (
+        SET "Function_Error=Missing required argument <EntryId>"
+        GOTO Failure
+    )
+
+    CALL FnEtcFlags %Function_Command%
+    IF ERRORLEVEL 1 GOTO Failure
+
+    :: Snapshotted at once, for the same reason as FnEtcDispatch: the readers
+    :: below parse flags of their own and do not SETLOCAL.
+    SET "Function_Argc=%GLOBAL_FlagArgc%"
+    SET "Function_Arg1=%GLOBAL_FlagArg1%"
+    SET "Function_Arg2=%GLOBAL_FlagArg2%"
+    SET "Function_Arg3=%GLOBAL_FlagArg3%"
+    SET "Function_Arg4=%GLOBAL_FlagArg4%"
+    IF DEFINED GLOBAL_FlagArgs SET "Function_Tail=%Function_Tail% %GLOBAL_FlagArgs%"
+    IF DEFINED GLOBAL_FlagPassthru SET "Function_Tail=%Function_Tail% %GLOBAL_FlagPassthru%"
+    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
+    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    GOTO Main
+
+:OneSuite
+    CALL FnEtcDataProjects "%~1"
+    IF ERRORLEVEL 1 EXIT /B 1
+
+    IF NOT DEFINED Function_ProjectId GOTO AllExternal
+    CALL :OneProject "%~1" "%Function_ProjectId%"
     EXIT /B %ERRORLEVEL%
 
-:ALL_SUITES
-    IF NOT DEFINED X_ORG GOTO :BAD_SHAPE
-    CALL FnEtcCsvSuites "%X_ORG%"
-    IF ERRORLEVEL 1 EXIT /B 1
-    SET "X_SUITE_LIST=%LPRE_SUITES_ACTIVE%"
-    SET "X_RC=0"
-    FOR %%S IN (%X_SUITE_LIST%) DO CALL :ONE_SUITE "%%S"
-    EXIT /B %X_RC%
-
-:ONE_SUITE
-    CALL FnEtcResolveSuite "%~1"
-    IF ERRORLEVEL 1 EXIT /B 1
-    CALL FnEtcCsvProjects "%GLOBAL_ResolvedSuiteOrgId%" "%~1"
-    IF ERRORLEVEL 1 EXIT /B 1
-    IF NOT DEFINED X_PROJECT GOTO :ALL_EXTERNAL_PROJECTS
-    CALL :ONE_PROJECT "%~1" "%X_PROJECT%"
-    EXIT /B %ERRORLEVEL%
-
-:ALL_EXTERNAL_PROJECTS
-    SET "X_PROJECT_LIST=%GLOBAL_PROJECTS_EXTERNAL%"
-    IF NOT DEFINED X_PROJECT_LIST EXIT /B 0
-    FOR %%P IN (%X_PROJECT_LIST%) DO CALL :ONE_PROJECT "%~1" "%%P"
+:AllExternal
+    IF NOT DEFINED GLOBAL_DataProjectsExternal EXIT /B 0
+    FOR %%P IN (%GLOBAL_DataProjectsExternal%) DO (
+        CALL :OneProject "%~1" "%%P"
+        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    )
     EXIT /B 0
 
-:ONE_PROJECT
-    CALL SET "X_IS_EXTERNAL=%%GLOBAL_PROJECT_%~2_EXTERNAL%%"
-    IF NOT DEFINED X_IS_EXTERNAL GOTO :UNKNOWN_PROJECT
-    IF /I NOT "%X_IS_EXTERNAL%"=="true" GOTO :NOT_EXTERNAL
-    IF DEFINED FLAG_DRY_RUN GOTO :EMIT
-    CALL Fn%~2Dispatch "%~1" "%X_COMMAND%" %X_ARGS% %X_FLAGS%
-    IF ERRORLEVEL 1 SET "X_RC=1"
+:OneProject
+    CALL FnEtcResolveProject "%~1" "%~2"
+    IF ERRORLEVEL 1 EXIT /B 1
+
+    IF /I NOT "%GLOBAL_ResolvedProjectIsExternal%"=="true" (
+        CALL FnEtcLogError FnEtcDispatchExternal "Project %~2 is not external, so it has no commands of its own"
+        ECHO   External projects: %GLOBAL_DataProjectsExternal%
+        SET "Function_ReturnCode=1"
+        EXIT /B 1
+    )
+
+    :: An external project declares its own dispatcher. Report a missing one the
+    :: same way a missing leaf is reported, so the grammar stays testable ahead
+    :: of those scripts being written.
+    WHERE Fn%~2Dispatch >NUL 2>&1
+    IF ERRORLEVEL 1 (
+        CALL FnEtcLogRun FnEtcDispatchExternal "fn=Fn%~2Dispatch suite=%~1 project=%~2 command=%Function_CommandId% flags=%Function_Tail%"
+        IF DEFINED Function_DryRun EXIT /B 0
+        CALL FnEtcLogError FnEtcDispatchExternal "Not implemented yet: Fn%~2Dispatch"
+        SET "Function_ReturnCode=1"
+        EXIT /B 1
+    )
+
+    CALL Fn%~2Dispatch "%~1" "%Function_CommandId%" %Function_Tail%
+    IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
     EXIT /B 0
 
-:EMIT
-    ECHO LPRE:EXTERNAL suite=%~1 project=%~2 command=%X_COMMAND% args=%X_ARGS% flags=%X_FLAGS%
-    EXIT /B 0
+:Failure
+    SET "Function_ReturnCode=1"
+    GOTO Destructor
 
-:UNKNOWN_PROJECT
-    ECHO LeprechaunCLI:FnEtcDispatchExternal[E]: Unknown module or project "%~2"
-    ECHO   Projects: %GLOBAL_PROJECTS%
-    SET "X_RC=1"
-    EXIT /B 1
-
-:NOT_EXTERNAL
-    ECHO LeprechaunCLI:FnEtcDispatchExternal[E]: Project "%~2" is not external, so it has no commands of its own
-    ECHO   External projects: %GLOBAL_PROJECTS_EXTERNAL%
-    SET "X_RC=1"
-    EXIT /B 1
-
-:BAD_SHAPE
-    ECHO LeprechaunCLI:FnEtcDispatchExternal[E]: Not a valid command for a %X_ENTRY%-level invocation
-    ECHO   Internal: ^<MODULE^> ^<ACTION^> ^<ARGS...^> ^<FLAGS...^>
-    ECHO   External: ^<PROJECT^> ^<COMMAND^>
-    EXIT /B 1
+:Destructor
+    IF DEFINED Function_Error CALL FnEtcLogError FnEtcDispatchExternal "%Function_Error%"
+    IF DEFINED Function_Error (
+        ECHO   Internal: ^<MODULE^> ^<ACTION^> ^<ARGS...^> ^<FLAGS...^>
+        ECHO   External: ^<PROJECT^> ^<COMMAND^>
+    )
+    EXIT /B %Function_ReturnCode%

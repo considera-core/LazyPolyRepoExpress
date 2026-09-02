@@ -16,3 +16,7 @@ Running suite commands will run all projects for the suite. This is useful for r
 `SuiteRootPath: string | NULL`: The root path of the suite's codebase.
 - Optional
 - Use relative paths in project configs.
+
+###### Todo
+- SuitePostLaunchCommand
+- SuitePostRunCommand

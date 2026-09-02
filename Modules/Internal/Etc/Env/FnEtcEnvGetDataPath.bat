@@ -1,19 +1,21 @@
 :: FnEtcEnvGetDataPath
-:: -- Resolves the v2 Data directory and sets GLOBAL_DataPath.
+:: leprechaun function env DataPath
+:: -- Resolves the Data directory and exports GLOBAL_DataPath.
 :: --
-:: -- Self-locating from %~dp0 rather than going through fn-config, because
-:: -- "fn-config get RootRepoPath" returns the repository root while every
-:: -- consumer of it uses the value as if it were the v2 directory.
+:: -- Self locating from %~dp0. The Bin forwarders CALL this script at its real
+:: -- path and do not SETLOCAL, so %~dp0 still names this directory across the
+:: -- hop and the export still reaches the original caller.
 :: --
 :: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_DataPath.
 
 @ECHO OFF
 
-:: <v2>/Modules/Internal/Etc/ -> <v2>/Data
-FOR %%I IN ("%~dp0..\..\..\Data") DO SET "GLOBAL_DataPath=%%~fI"
+:: <root>\Modules\Internal\Etc\Env\ -> <root>\Data
+FOR %%I IN ("%~dp0..\..\..\..\Data") DO SET "GLOBAL_DataPath=%%~fI"
 
 IF NOT EXIST "%GLOBAL_DataPath%" (
-    ECHO LeprechaunCLI:FnEtcEnvGetDataPath[E]: Data directory not found at %GLOBAL_DataPath%
+    CALL FnEtcLogError FnEtcEnvGetDataPath "Data directory not found at %GLOBAL_DataPath%"
+    SET "GLOBAL_DataPath="
     EXIT /B 1
 )
 

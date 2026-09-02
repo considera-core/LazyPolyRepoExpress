@@ -7,15 +7,15 @@
 
 @ECHO OFF
 
-SET "Function_SuiteId=%~1"
-SET "Function_ProjectId=%~2"
+SET "Export_SuiteId=%~1"
+SET "Export_ProjectId=%~2"
 
-IF NOT DEFINED Function_SuiteId (
+IF NOT DEFINED Export_SuiteId (
     CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Missing required argument ^<SuiteId^>"
     EXIT /B 1
 )
 
-IF NOT DEFINED Function_ProjectId (
+IF NOT DEFINED Export_ProjectId (
     CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Missing required argument ^<ProjectId^>"
     EXIT /B 1
 )
@@ -23,10 +23,13 @@ IF NOT DEFINED Function_ProjectId (
 CALL leprechaun function env DataPath
 IF ERRORLEVEL 1 EXIT /B 1
 
-CALL leprechaun function resolve Suite "%Function_SuiteId%"
+CALL FnEtcResolveSuite "%Export_SuiteId%"
 IF ERRORLEVEL 1 EXIT /B 1
 
-SET "Local_DataProjectAppDefinitionsFile=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedSuiteOrgDirName%\Suites\%GLOBAL_ResolvedSuiteDirName%\Apps.Definitions.csv"
+CALL FnEtcResolveOrganization "%GLOBAL_ResolvedSuiteOrgId%"
+IF ERRORLEVEL 1 EXIT /B 1
+
+SET "Local_DataProjectAppDefinitionsFile=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedOrgIdentifier%\Suites\%GLOBAL_ResolvedSuiteIdentifier%\Apps.Definitions.csv"
 IF NOT EXIST "%Local_DataProjectAppDefinitionsFile%" (
     CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Apps.Definitions.csv not found at %Local_DataProjectAppDefinitionsFile%"
     EXIT /B 1

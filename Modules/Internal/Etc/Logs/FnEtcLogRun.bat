@@ -1,20 +1,30 @@
 :: FnEtcLogRun <Function> <Message>
 :: leprechaun function log run <Function> <Message>
-:: -- Logs an error message to the LeprechaunCLI log file, and also echoes it to
-:: -- the console. The message is prefixed with the function name, and the error level.
+:: -- Writes a dry run report as LeprechaunCLI:<Function>[R]: <Message>.
+:: --
+:: -- NOTE: The message is captured BEFORE delayed expansion is enabled, then
+:: --       echoed through it. That is what lets a message carry <, >, & or !
+:: --       literally: a plain ECHO would read them as operators, and capturing
+:: --       them under delayed expansion would eat the "!". Messages therefore
+:: --       need no caret escaping, which matters because every CALL hop between
+:: --       the caller and here strips one level of caret.
 
 @ECHO OFF
+SETLOCAL EnableExtensions
 
-SET "FUNCTION_NAME=%~1"
-IF NOT DEFINED FUNCTION_NAME (
-    ECHO LeprechaunCLI:FnEtcLogRun[F]: Missing required argument ^<Function^>
+SET "Function_Name=%~1"
+SET "Function_Message=%~2"
+
+IF NOT DEFINED Function_Name (
+    ECHO LeprechaunCLI:FnEtcLogRun[F]: Missing required argument Function
     EXIT /B 1
 )
 
-SET "FUNCTION_MESSAGE=%~2"
-IF NOT DEFINED FUNCTION_MESSAGE (
-    ECHO LeprechaunCLI:FnEtcLogRun[F]: Missing required argument ^<Message^>
+IF NOT DEFINED Function_Message (
+    ECHO LeprechaunCLI:FnEtcLogRun[F]: Missing required argument Message
     EXIT /B 1
 )
 
-ECHO LeprechaunCLI:%FUNCTION_NAME%[R]: %FUNCTION_MESSAGE%
+SETLOCAL EnableDelayedExpansion
+ECHO LeprechaunCLI:!Function_Name![R]: !Function_Message!
+EXIT /B 0

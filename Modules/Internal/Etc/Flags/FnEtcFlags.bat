@@ -1,40 +1,46 @@
-:: FnEtcFlags <ARGS...>
-:: -- Converts a leprechaun command line into FLAG_* variables in the CALLER's scope.
+:: FnEtcFlags <Arg[]>
+:: leprechaun function flags <Arg[]>
+:: -- Converts a leprechaun command line into flag variables in the CALLER's scope.
 :: --
 :: -- Flag classes:
 :: --   LIST    (LPRE_LIST_FLAGS)  consume tokens until the next -flag or end of line
-:: --     -p api bff   -> FLAG_PROJECTS=api bff  FLAG_PROJECTS_COUNT=2
-:: --                     FLAG_PROJECTS_1=api    FLAG_PROJECTS_2=bff
+:: --     -p api bff   -> GLOBAL_FlagProjects=api bff  GLOBAL_FlagProjectsCount=2
+:: --                     GLOBAL_FlagProjects1=api     GLOBAL_FlagProjects2=bff
 :: --   VALUE   (LPRE_VALUE_FLAGS) consume exactly the next token
-:: --     --org considera -> FLAG_ORG=considera
-:: --   BOOLEAN (everything else) set to 1 and appended to FLAG_PASSTHRU
-:: --     -v -d        -> FLAG_VERBOSE=1 FLAG_DRY_RUN=1 FLAG_PASSTHRU=-v -d
+:: --     --org considera -> GLOBAL_FlagOrg=considera
+:: --   BOOLEAN (everything else) set to 1 and appended to GLOBAL_FlagPassthru
+:: --     -v -d        -> GLOBAL_FlagVerbose=1 GLOBAL_FlagDryRun=1
 :: --
 :: -- Positional args:
-:: --   FLAG_ARGC     -> count of positional args
-:: --   FLAG_ARG_1..N -> each positional arg
+:: --   GLOBAL_FlagArgc     -> count of positional args
+:: --   GLOBAL_FlagArg1..N  -> each positional arg
 :: --
-:: -- Short flags are canonicalized to their long name via LPRE_FLAG_ALIASES, so
-:: -- callers only ever read FLAG_PROJECTS / FLAG_VERBOSE / etc. Dashes in flag
-:: -- names become underscores: --dry-run -> FLAG_DRY_RUN.
+:: -- Two namespaces are written for every flag. GLOBAL_Flag<Name> is the one the
+:: -- dispatch chain reads; FLAG_<NAME> is kept for the external dispatcher, which
+:: -- still reads the older names. Batch variable names are case insensitive and
+:: -- the GLOBAL_ form drops separators, so --dry-run sets GLOBAL_Flagdryrun and a
+:: -- caller may read it as GLOBAL_FlagDryRun.
 :: --
 :: -- NOTE: This script deliberately does NOT call SETLOCAL. cmd.exe runs an
 :: --       implicit ENDLOCAL when a batch file returns, which would discard
-:: --       every FLAG_* variable this script exists to produce. Callers are
-:: --       expected to SETLOCAL themselves so FLAG_* stays scoped to them.
-:: -- NOTE: Callers should NOT enable delayed expansion, or "!" inside argument
-:: --       values is eaten before this script ever sees the value.
+:: --       every flag variable this script exists to produce. Callers are
+:: --       expected to SETLOCAL themselves so the flags stay scoped to them.
+:: -- NOTE: Callers should NOT enable delayed expansion, or "!" inside an
+:: --       argument value is eaten before this script ever sees the value.
 
 @ECHO OFF
 
 IF NOT DEFINED LPRE_LIST_FLAGS SET "LPRE_LIST_FLAGS=projects args"
 IF NOT DEFINED LPRE_VALUE_FLAGS SET "LPRE_VALUE_FLAGS=org suite project module action entry env fn id org_id suite_id"
-IF NOT DEFINED LPRE_FLAG_ALIASES SET "LPRE_FLAG_ALIASES=p:projects a:args o:org s:suite m:module e:entry v:verbose d:dry_run i:id"
+IF NOT DEFINED LPRE_FLAG_ALIASES SET "LPRE_FLAG_ALIASES=p:projects a:args o:org s:suite m:module e:entry v:verbose d:dry_run i:id r:refresh"
 
-:: Clear FLAG_* left over from any previous call in this scope.
+:: Clear both namespaces left over from any previous call in this scope.
 FOR /F "delims==" %%V IN ('SET FLAG_ 2^>NUL') DO SET "%%V="
+FOR /F "delims==" %%V IN ('SET GLOBAL_Flag 2^>NUL') DO SET "%%V="
 SET "FLAG_ARGC=0"
 SET "FLAG_PASSTHRU="
+SET "GLOBAL_FlagArgc=0"
+SET "GLOBAL_FlagPassthru="
 
 :PARSE
     :: [%1] rather than "%~1": a literal "" argument must not read as end-of-args,
@@ -61,6 +67,8 @@ SET "FLAG_PASSTHRU="
     SET "LPRE_KEY=%LPRE_KEY:-=_%"
     CALL :CANONICALIZE "%LPRE_KEY%"
     SET "LPRE_KEY=%LPRE_CANON%"
+    :: GLOBAL_Flag names carry no separators, so --dry-run and DryRun agree.
+    SET "LPRE_GKEY=%LPRE_KEY:_=%"
 
     CALL :IS_LISTED "%LPRE_KEY%" "%LPRE_LIST_FLAGS%"
     IF NOT ERRORLEVEL 1 GOTO :PARSE_LIST
@@ -69,7 +77,9 @@ SET "FLAG_PASSTHRU="
     IF NOT ERRORLEVEL 1 GOTO :PARSE_VALUE
 
     SET "FLAG_%LPRE_KEY%=1"
+    SET "GLOBAL_Flag%LPRE_GKEY%=1"
     SET "FLAG_PASSTHRU=%FLAG_PASSTHRU% %LPRE_TOKEN%"
+    SET "GLOBAL_FlagPassthru=%GLOBAL_FlagPassthru% %LPRE_TOKEN%"
     SHIFT
     GOTO :PARSE
 
@@ -77,11 +87,13 @@ SET "FLAG_PASSTHRU="
     SHIFT
     IF [%1]==[] GOTO :MISSING_VALUE
     SET "FLAG_%LPRE_KEY%=%~1"
+    SET "GLOBAL_Flag%LPRE_GKEY%=%~1"
     SHIFT
     GOTO :PARSE
 
 :PARSE_LIST
     SET "LPRE_LIST_KEY=%LPRE_KEY%"
+    SET "LPRE_LIST_GKEY=%LPRE_GKEY%"
     SET "LPRE_LIST_VALUE="
     SET "LPRE_LIST_N=0"
 
@@ -94,6 +106,7 @@ SET "FLAG_PASSTHRU="
     IF "%LPRE_PEEK:~0,1%"=="-" GOTO :PARSE_LIST_STORE
     SET /A LPRE_LIST_N+=1
     SET "FLAG_%LPRE_LIST_KEY%_%LPRE_LIST_N%=%~1"
+    SET "GLOBAL_Flag%LPRE_LIST_GKEY%%LPRE_LIST_N%=%~1"
     SET "LPRE_LIST_VALUE=%LPRE_LIST_VALUE% %~1"
     GOTO :PARSE_LIST_LOOP
 
@@ -103,26 +116,31 @@ SET "FLAG_PASSTHRU="
     SET "LPRE_LIST_VALUE=%LPRE_LIST_VALUE:~1%"
     SET "FLAG_%LPRE_LIST_KEY%=%LPRE_LIST_VALUE%"
     SET "FLAG_%LPRE_LIST_KEY%_COUNT=%LPRE_LIST_N%"
+    SET "GLOBAL_Flag%LPRE_LIST_GKEY%=%LPRE_LIST_VALUE%"
+    SET "GLOBAL_Flag%LPRE_LIST_GKEY%Count=%LPRE_LIST_N%"
     GOTO :PARSE
 
 :PARSE_POSITIONAL
     SET /A FLAG_ARGC+=1
+    SET /A GLOBAL_FlagArgc+=1
     SET "FLAG_ARG_%FLAG_ARGC%=%~1"
+    SET "GLOBAL_FlagArg%GLOBAL_FlagArgc%=%~1"
     SHIFT
     GOTO :PARSE
 
 :MISSING_VALUE
-    ECHO LeprechaunCLI:FnEtcFlags[E]: Missing value for flag "%LPRE_KEY%"
+    CALL FnEtcLogError FnEtcFlags "Missing value for flag %LPRE_KEY%"
     CALL :CLEANUP
     EXIT /B 1
 
 :MISSING_LIST_VALUE
-    ECHO LeprechaunCLI:FnEtcFlags[E]: Flag "%LPRE_LIST_KEY%" requires at least one value
+    CALL FnEtcLogError FnEtcFlags "Flag %LPRE_LIST_KEY% requires at least one value"
     CALL :CLEANUP
     EXIT /B 1
 
 :PARSE_DONE
     IF DEFINED FLAG_PASSTHRU SET "FLAG_PASSTHRU=%FLAG_PASSTHRU:~1%"
+    IF DEFINED GLOBAL_FlagPassthru SET "GLOBAL_FlagPassthru=%GLOBAL_FlagPassthru:~1%"
     CALL :CLEANUP
     EXIT /B 0
 
@@ -139,9 +157,11 @@ SET "FLAG_PASSTHRU="
 :CLEANUP
     SET "LPRE_TOKEN="
     SET "LPRE_KEY="
+    SET "LPRE_GKEY="
     SET "LPRE_CANON="
     SET "LPRE_PEEK="
     SET "LPRE_LIST_KEY="
+    SET "LPRE_LIST_GKEY="
     SET "LPRE_LIST_VALUE="
     SET "LPRE_LIST_N="
     EXIT /B 0

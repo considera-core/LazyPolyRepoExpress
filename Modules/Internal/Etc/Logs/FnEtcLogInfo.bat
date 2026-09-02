@@ -1,6 +1,6 @@
-:: FnEtcLogError <Function> <Message>
-:: leprechaun function log error <Function> <Message>
-:: -- Writes an error as LeprechaunCLI:<Function>[E]: <Message>.
+:: FnEtcLogInfo <Function> <Message>
+:: leprechaun function log info <Function> <Message>
+:: -- Writes an informational message as LeprechaunCLI:<Function>[I]: <Message>.
 :: --
 :: -- NOTE: The message is captured BEFORE delayed expansion is enabled, then
 :: --       echoed through it. That is what lets a message carry <, >, & or !
@@ -16,15 +16,15 @@ SET "Function_Name=%~1"
 SET "Function_Message=%~2"
 
 IF NOT DEFINED Function_Name (
-    ECHO LeprechaunCLI:FnEtcLogError[F]: Missing required argument Function
+    ECHO LeprechaunCLI:FnEtcLogInfo[F]: Missing required argument Function
     EXIT /B 1
 )
 
 IF NOT DEFINED Function_Message (
-    ECHO LeprechaunCLI:FnEtcLogError[F]: Missing required argument Message
+    ECHO LeprechaunCLI:FnEtcLogInfo[F]: Missing required argument Message
     EXIT /B 1
 )
 
 SETLOCAL EnableDelayedExpansion
-ECHO LeprechaunCLI:!Function_Name![E]: !Function_Message!
+ECHO LeprechaunCLI:!Function_Name![I]: !Function_Message!
 EXIT /B 0

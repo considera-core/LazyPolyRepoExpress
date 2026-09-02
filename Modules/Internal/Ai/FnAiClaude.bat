@@ -1,100 +1,131 @@
-:: FnAiClaude <SuiteId> <ProjectId> --args <Arg[]> <Flag[]>                     (single project, base case)
-:: FnAiClaude <SuiteId> --projects <ProjectId[]> --args <Arg[]> <Flag[]>        (selected projects)
-:: FnAiClaude <SuiteId> --args <Arg[]> <Flag[]>                                 (all projects)
+:: FnAiClaude <SuiteId> <ProjectId> --args <Arg[]> <Flag[]>              (single project, base case)
+:: FnAiClaude <SuiteId> --projects <ProjectId[]> --args <Arg[]> <Flag[]> (selected projects)
+:: FnAiClaude <SuiteId> --args <Arg[]> <Flag[]>                          (all projects)
 :: leprechaun function ai claude <SuiteId> <ProjectId> --args <Arg[]> <Flag[]>
-:: leprechaun function ai claude <SuiteId> --projects <ProjectId[]> --args <Arg[]> <Flag[]>
-:: leprechaun function ai claude <SuiteId> --args <Arg[]> <Flag[]>
 :: -- Opens Claude Code in a project, with args as the initial prompt.
 :: -- Flags:
-:: --   --here:                                                     run in this window instead of spawning a new one
-:: --   -v,--verbose:                                               verbose
-:: --   -d,--dry-run:                                               report what would run, do not run it
+:: --   --here:               run in this window instead of spawning a new one
+:: --   -v, --verbose:        verbose
+:: --   -d, --dry-run:        report what would run, do not run it
+:: --
+:: -- The reference leaf. All three forms are the same script: called without a
+:: -- single project it hands itself to FnEtcForEachProject, and each expansion
+:: -- re-enters here with one project, which is the only form that does work.
+:: -- FnEtcForEachProject picks the project list, honouring --projects when it is
+:: -- set, so both fan out forms are one branch here.
+:: --
+:: -- ARGS arrive as --args rather than as trailing positionals, which is what
+:: -- keeps positional 2 unambiguously a project on the way down.
 
 @ECHO OFF
 SETLOCAL EnableExtensions
+GOTO Constructor
 
-SET "Function_SuiteId=%~1"
-SET "Function_ProjectId=%~2"
+:Main
+    IF DEFINED Function_ProjectId GOTO Base
 
-CALL leprechaun function flags %*
-SET "Local_FlagHere=%GLOBAL_FlagHere%"
-SET "Local_FlagVerbose=%GLOBAL_FlagVerbose%"
-SET "Local_FlagDryRun=%GLOBAL_FlagDryRun%"
-SET "Local_FlagProjects=%GLOBAL_FlagProjects%"
-SET "Local_FlagArgs=%GLOBAL_FlagArgs%"
+    :: Fan out. FnEtcForEachProject re-enters this script once per project, so
+    :: the recursion terminates at the base case below.
+    CALL FnEtcForEachProject "%Function_SuiteId%" FnAiClaude %Function_Tail%
+    IF ERRORLEVEL 1 GOTO Failure
+    GOTO Destructor
 
-IF NOT DEFINED Function_SuiteId (
-    CALL leprechaun function log error FnAiClaude "Missing required argument ^<SuiteId^>"
-    EXIT /B 1
-)
+:Base
+    CALL FnEtcResolveProject "%Function_SuiteId%" "%Function_ProjectId%"
+    IF ERRORLEVEL 1 GOTO Failure
 
-SET "Local_Args=%*"
-SHIFT
-
-IF NOT DEFINED Function_ProjectId (
-    IF DEFINED Local_FlagProjects (
-        CALL leprechaun function for Projects FnAiClaude --projects "%Local_FlagProjects%" "%Local_Args%"
-        GOTO DESTRUCTOR 0
+    :: Reported before the directory is checked, so a dry run works on a machine
+    :: where the suite is not checked out.
+    IF DEFINED Function_DryRun (
+        CALL FnEtcLogRun FnAiClaude "fn=FnAiClaude suite=%Function_SuiteId% project=%Function_ProjectId% path=%GLOBAL_ResolvedProjectRootPath% prompt=%Function_Prompt% flags=%Function_Passthru%"
+        GOTO Destructor
     )
 
-    CALL leprechaun function for Projects FnAiClaude "%Function_SuiteId%" "%Local_Args%"
-    GOTO DESTRUCTOR 0
-)
+    IF NOT EXIST "%GLOBAL_ResolvedProjectRootPath%" (
+        SET "Function_Error=Project path not found: %GLOBAL_ResolvedProjectRootPath%"
+        GOTO Failure
+    )
 
-:: Base
-CALL leprechaun function resolve Project "%Function_SuiteId%" "%Function_ProjectId%"
-IF ERRORLEVEL 1 GOTO DESTRUCTOR 1
+    CALL FnEtcLogInfo FnAiClaude "Running Claude Code for %Function_SuiteId%/%Function_ProjectId% (%GLOBAL_ResolvedProjectName%)"
 
-:: IF DEFINED FLAG_DRY_RUN (
-::     CALL leprechaun function log run FnAiClaude "suite=%Function_SuiteId% project=%Function_ProjectId% path=%GLOBAL_ResolvedProjectRootPath% prompt=%GLOBAL_FlagArgs_1% flags=%GLOBAL_FlagArgs%"
-::     EXIT /B 0
-:: )
+    IF DEFINED Function_Verbose (
+        CALL FnEtcLogDebug FnAiClaude "path %GLOBAL_ResolvedProjectRootPath%"
+    )
 
-IF NOT EXIST "%GLOBAL_ResolvedProjectRootPath%" (
-    CALL leprechaun function log error FnAiClaude "Project path not found: %GLOBAL_ResolvedProjectRootPath%"
-    GOTO DESTRUCTOR 1
-)
+    IF DEFINED Function_Verbose IF DEFINED Function_Prompt (
+        CALL FnEtcLogDebug FnAiClaude "prompt %Function_Prompt%"
+    )
 
-CALL lprechaun function log info FnAiClaude "Running Claude Code for Claude Code for %Function_SuiteId%/%Function_ProjectId% (%GLOBAL_ResolvedProjectName%)"
+    IF DEFINED Function_Here GOTO Here
+    GOTO Spawn
 
-IF DEFINED GLOBAL_FlagsVerbose (
-    CALL leprechaun function log debug "path %GLOBAL_ResolvedProjectRootPath%"
-)
-
-IF DEFINED GLOBAL_FlagsVerbose IF DEFINED AI_ARGS (
-    CALL leprechaun function log debug "prompt %GLOBAL_FlagArgs%"
-)
-
-IF DEFINED GLOBAL_FlagsHere (
-    :: Run here
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%" || GOTO :HandleNoPath
-    CALL claude %Local_FlagArgs%
+:Here
+    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
+    IF ERRORLEVEL 1 (
+        SET "Function_Error=Could not enter %GLOBAL_ResolvedProjectRootPath%"
+        GOTO Failure
+    )
+    CALL claude %Function_Prompt%
+    SET "Function_ReturnCode=%ERRORLEVEL%"
     POPD
-    GOTO Destructor %ERRORLEVEL%
-)
+    GOTO Destructor
 
-:: A new Windows Terminal tab per project, so a fan out over a whole suite
-:: does not serialise behind one interactive session.
-wt -w 0 -d "%GLOBAL_ResolvedProjectPath%" --title "Claude Code - %Function_ProjectId%" cmd /k claude %Local_FlagArgs%
-IF ERRORLEVEL 1 (
-    CALL leprechaun function log error FnAiClaude "Could not spawn a window. Is Windows Terminal (wt) installed?"
-    ECHO   Add the --here flag to run in this window instead.
-    GOTO Destructor 1
-)
+:Spawn
+    :: A new Windows Terminal tab per project, so a fan out over a whole suite
+    :: does not serialise behind one interactive session.
+    wt -w 0 -d "%GLOBAL_ResolvedProjectRootPath%" --title "Claude Code - %Function_ProjectId%" cmd /k claude %Function_Prompt%
+    IF ERRORLEVEL 1 (
+        SET "Function_Error=Could not spawn a window. Is Windows Terminal (wt) installed? Add --here to run in this window instead."
+        GOTO Failure
+    )
+    GOTO Destructor
 
-GOTO Destructor 0
+:Constructor
+    SET "Function_Tail="
+    SET "Function_Error="
+    SET "Function_ReturnCode=0"
 
-:HandleNoPath
-    CALL leprechaun function log error FnAiClaude "Project path not found: %GLOBAL_ResolvedProjectPath%"
-    GOTO DESTRUCTOR 1
+    CALL FnEtcFlags %*
+
+    :: Read from the parsed positionals rather than %1 and %2. FnEtcFlags counts
+    :: only positionals, so a flag can never be mistaken for the project: in the
+    :: fan out form "<suite> --args hello" there simply is no positional 2.
+    SET "Function_SuiteId=%GLOBAL_FlagArg1%"
+    SET "Function_ProjectId=%GLOBAL_FlagArg2%"
+
+    :: Snapshotted for the same reason: FnEtcResolveProject parses flags of its
+    :: own and does not SETLOCAL, so GLOBAL_Flag* is gone by the time the base
+    :: case below runs.
+    SET "Function_Prompt=%GLOBAL_FlagArgs%"
+    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
+    SET "Function_Verbose=%GLOBAL_FlagVerbose%"
+    SET "Function_Here=%GLOBAL_FlagHere%"
+    SET "Function_Passthru=%GLOBAL_FlagPassthru%"
+
+    :: Rebuilt rather than shifted, so the recursion carries its prompt and flags
+    :: regardless of the order they were given in. The project is deliberately
+    :: left out: FnEtcForEachProject supplies that.
+    IF DEFINED Function_Prompt SET "Function_Tail=%Function_Tail% --args %Function_Prompt%"
+    IF DEFINED GLOBAL_FlagProjects SET "Function_Tail=%Function_Tail% -p %GLOBAL_FlagProjects%"
+    IF DEFINED Function_Passthru SET "Function_Tail=%Function_Tail% %Function_Passthru%"
+    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    GOTO Validate
+
+:Validate
+    IF NOT DEFINED Function_SuiteId (
+        SET "Function_Error=Missing required argument <SuiteId>"
+        GOTO Failure
+    )
+    GOTO Main
+
+:Failure
+    SET "Function_ReturnCode=1"
+    GOTO Destructor
 
 :Destructor
+    IF DEFINED Function_Error CALL FnEtcLogError FnAiClaude "%Function_Error%"
     SET "Function_SuiteId="
     SET "Function_ProjectId="
-    SET "Local_Args="
-    SET "Local_FlagHere="
-    SET "Local_FlagVerbose="
-    SET "Local_FlagDryRun="
-    SET "Local_FlagProjects="
-    SET "Local_FlagArgs="
-    EXIT /B %~1
+    SET "Function_Tail="
+    SET "Function_Error="
+    EXIT /B %Function_ReturnCode%

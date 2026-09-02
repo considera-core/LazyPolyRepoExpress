@@ -63,107 +63,38 @@ function Verify-PathAddition {
     [Environment]::SetEnvironmentVariable("Path", $cleanPath, "User")
 }
 
-Write-Host "Starting Lazy Polyrepo Express Tools installation..."
+Write-Host "LeprechaunCLI:Install[I]: Starting Lazy Polyrepo Express Tools installation..."
 
 # Root paths
 $REPO_PATH = Resolve-Path "$PSScriptRoot"
-$SYM_PATH  = "C:/.symlinks/LPRE"
+$SYM_PATH  = "C:/.symlinks/Leprechaun"
 
-Write-Host "Repository path: $REPO_PATH"
-Write-Host "Symbolic links path: $SYM_PATH"
+Write-Host "LeprechaunCLI:Install[I]: Repository path: $REPO_PATH"
+Write-Host "LeprechaunCLI:Install[I]: Symbolic links path: $SYM_PATH"
 
 # Create links directory
-Write-Host "Creating $SYM_PATH directory..."
+Write-Host "LeprechaunCLI:Install[I]: Creating $SYM_PATH directory..."
 if (-not (Test-Path $SYM_PATH)) {
     New-Item -ItemType Directory -Path $SYM_PATH | Out-Null
 } else {
-    Write-Host "  $SYM_PATH already exists."
+    Write-Host "LeprechaunCLI:Install[I]: $SYM_PATH already exists."
 }
 
 # Backup PATH
-Write-Host "Backing up PATH (.\saved_path.txt)..."
+Write-Host "LeprechaunCLI:Install[I]: Backing up PATH (.\saved_path.txt)..."
 $env:PATH | Out-File -Encoding utf8 "saved_path.txt"
 
-Write-Host "Creating symbolic links for script paths..."
+Write-Host "LeprechaunCLI:Install[I]: Creating symbolic links for script paths..."
 
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "Root") `
-    -TargetPath $REPO_PATH
+Verify-PathAddition -LinkPath (Join-Path $SYM_PATH "Root") -TargetPath $REPO_PATH
+Verify-PathAddition -LinkPath (Join-Path $SYM_PATH "Exec") -TargetPath "$REPO_PATH\Bin"
 
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "Config") `
-    -TargetPath (Join-Path $REPO_PATH "config")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "Modules") `
-    -TargetPath (Join-Path $REPO_PATH "modules")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesAi") `
-    -TargetPath (Join-Path $REPO_PATH "modules\ai")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesApp") `
-    -TargetPath (Join-Path $REPO_PATH "modules\app")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesEtc") `
-    -TargetPath (Join-Path $REPO_PATH "modules\etc")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesGit") `
-    -TargetPath (Join-Path $REPO_PATH "modules\git")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesIde") `
-    -TargetPath (Join-Path $REPO_PATH "modules\ide")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "ModulesNpm") `
-    -TargetPath (Join-Path $REPO_PATH "modules\npm")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "Tenants") `
-    -TargetPath (Join-Path $REPO_PATH "tenants")
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "TenantsDispatch") `
-    -TargetPath (Join-Path $REPO_PATH "tenants\dispatch")
-
-# =========================
-# v2 entry points and modules
-# =========================
-# The v2 tree resolves commands by name off PATH, so every module directory has
-# to be reachable: Fn<Module>Dispatch, the leaf Fn<Module><Action> scripts and
-# the Etc helpers are all looked up that way.
-
-$V2_PATH = Join-Path $REPO_PATH "tenants\data\v2"
-
-Verify-PathAddition `
-    -LinkPath (Join-Path $SYM_PATH "V2Dispatch") `
-    -TargetPath (Join-Path $V2_PATH "Dispatch")
-
-$V2_MODULES = Join-Path $V2_PATH "Modules\Internal"
-foreach ($moduleDir in Get-ChildItem -Path $V2_MODULES -Directory) {
-    Verify-PathAddition `
-        -LinkPath (Join-Path $SYM_PATH ("V2Module" + $moduleDir.Name)) `
-        -TargetPath $moduleDir.FullName
-}
-
-Write-Host ""
-
-# =========================
-# Verify org commands
-# =========================
-
-Write-Host "Testing org commands..."
-Write-Host "If they do not work, restart your terminal and run this script again."
+Write-Host "LeprechaunCLI:Install[I]: Testing org commands..."
+Write-Host "LeprechaunCLI:Install[I]: If they do not work, restart your terminal and run this script again."
 
 fn-config new
 fn-config set Username $env:USERNAME
 fn-config set RootRepoPath $REPO_PATH
 fn-config set RootSymLinksPath $SYM_PATH
-sample-org hello
+leprechaun modules
 ConsideraWeb test run
-
-Write-Host "If they did not work, restart your terminal and run this script again."

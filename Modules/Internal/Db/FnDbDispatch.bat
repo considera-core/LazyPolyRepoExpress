@@ -1,78 +1,137 @@
-:: FnDbDispatch --suite <SUITE> --action <ACTION> [--project <PROJECT>]
-::               [-p <PROJECTS...>] [-a <ARGS...>] [FLAGS...]
-:: -- Validates the action for the db module and invokes the leaf function
+:: FnDbDispatch <SuiteId> <ProjectId> <ActionId> <Arg[]> <Flag[]>
+:: leprechaun function db dispatch <SuiteId> <ProjectId> <ActionId> <Arg[]> <Flag[]>
+:: -- Validates the action for the db module and invokes the leaf function:
 :: --
-:: --   FnDb<Action> SUITE PROJECT ARGS... FLAGS...          (single project)
-:: --   FnDb<Action> SUITE ARGS... -p PROJECTS... FLAGS...   (selected projects)
-:: --   FnDb<Action> SUITE ARGS... FLAGS...                  (all projects)
+:: --   FnDb<Action> SuiteId ProjectId --args ARGS... FLAGS...   (single project)
+:: --   FnDb<Action> SuiteId --projects P... --args ARGS...      (selected projects)
+:: --   FnDb<Action> SuiteId --args ARGS... FLAGS...             (all projects)
 :: --
-:: -- which is the positional Function Schema from Docs.md. The leaf recurses on
-:: -- itself via FnEtcForEachProject until it reaches the single project base case.
+:: -- which is the Function Schema from Docs.md. <ProjectId> may be empty, which
+:: -- is the fan out form: the leaf recurses through FnEtcForEachProject until it
+:: -- reaches the single project base case, which is the only form that works.
+:: --
+:: -- The <action>:<FunctionSuffix> map lives here rather than in the router, so
+:: -- the action list and the resolved function name cannot drift apart. Only the
+:: -- two SET lines below differ between one module dispatcher and the next.
 
 @ECHO OFF
-:: No EnableDelayedExpansion: FnEtcFlags writes into this scope, and "!" inside a
-:: passthrough arg would be eaten before the leaf function ever saw it.
+:: No EnableDelayedExpansion: a "!" inside a passthrough arg would be eaten
+:: before the leaf function ever saw it.
 SETLOCAL EnableExtensions
+GOTO Constructor
 
-SET "M_MODULE=Db"
-SET "M_LABEL=db"
-:: <action>:<function suffix>
-SET "M_ACTIONS=migrate:Migrate seed:Seed reset:Reset"
+:Main
+    CALL FnEtcResolveSuite "%Function_SuiteId%"
+    IF ERRORLEVEL 1 GOTO Failure
 
-CALL FnEtcFlags %*
-IF ERRORLEVEL 1 EXIT /B 1
+    IF DEFINED Function_ProjectId (
+        CALL FnEtcResolveProject "%Function_SuiteId%" "%Function_ProjectId%"
+        IF ERRORLEVEL 1 GOTO Failure
+    )
 
-SET "M_SUITE=%FLAG_SUITE%"
-SET "M_ACTION=%FLAG_ACTION%"
-SET "M_PROJECT=%FLAG_PROJECT%"
-SET "M_PROJECTS=%FLAG_PROJECTS%"
-SET "M_ARGS=%FLAG_ARGS%"
-SET "M_FLAGS=%FLAG_PASSTHRU%"
+    :: Docs.md keeps the grammar testable ahead of the leaves being written, so a
+    :: dry run reports the call it would have made rather than failing on a file
+    :: that is not there yet. Outside a dry run a missing leaf is a real error.
+    IF NOT EXIST "%~dp0Fn%Function_Pascal%%Function_Suffix%.bat" GOTO Missing
 
-IF NOT DEFINED M_SUITE GOTO :MISSING_SUITE
-IF NOT DEFINED M_ACTION GOTO :MISSING_ACTION
+    CALL leprechaun function %Function_Module% %Function_Suffix% "%Function_SuiteId%" %Function_ProjectArg% %Function_Tail%
+    IF ERRORLEVEL 1 GOTO Failure
 
-SET "M_SUFFIX="
-FOR %%A IN (%M_ACTIONS%) DO FOR /F "tokens=1,2 delims=:" %%X IN ("%%A") DO IF /I "%%X"=="%M_ACTION%" SET "M_SUFFIX=%%Y"
-IF NOT DEFINED M_SUFFIX GOTO :UNKNOWN_ACTION
+    GOTO Destructor
 
-SET "M_FN=Fn%M_MODULE%%M_SUFFIX%"
+:Missing
+    CALL FnEtcLogRun FnDbDispatch "fn=Fn%Function_Pascal%%Function_Suffix% suite=%Function_SuiteId% project=%Function_ProjectId% args=%Function_Args% projects=%Function_Projects% flags=%Function_Passthru%"
+    IF DEFINED Function_DryRun GOTO Destructor
+    SET "Function_Error=Not implemented yet: Fn%Function_Pascal%%Function_Suffix%"
+    GOTO Failure
 
-SET "M_PROJECT_ARG="
-IF DEFINED M_PROJECT SET "M_PROJECT_ARG="%M_PROJECT%""
-SET "M_PROJECTS_FLAG="
-IF DEFINED M_PROJECTS SET "M_PROJECTS_FLAG=-p %M_PROJECTS%"
+:Constructor
+    SET "Function_Module=db"
+    SET "Function_Pascal=Db"
+    :: <action>:<function suffix>
+    SET "Function_Actions=migrate:Migrate seed:Seed reset:Reset"
 
-:: Under -d the leaf is still called, with -d passed through, so a dry run
-:: previews the real fan out. Only when the leaf does not exist yet does this
-:: layer report on its behalf, which is what keeps the grammar testable ahead of
-:: the leaves being written.
-IF NOT DEFINED FLAG_DRY_RUN GOTO :INVOKE
-IF NOT EXIST "%~dp0%M_FN%.bat" GOTO :EMIT
+    SET "Function_Args="
+    SET "Function_Tail="
+    SET "Function_Suffix="
+    SET "Function_ProjectArg="
+    SET "Function_Error="
+    SET "Function_ReturnCode=0"
 
-:INVOKE
-    CALL %M_FN% "%M_SUITE%" %M_PROJECT_ARG% %M_ARGS% %M_PROJECTS_FLAG% %M_FLAGS%
-    EXIT /B %ERRORLEVEL%
+    CALL FnEtcFlags %*
 
-:EMIT
-    ECHO LPRE:EXEC fn=%M_FN% suite=%M_SUITE% project=%M_PROJECT% args=%M_ARGS% projects=%M_PROJECTS% flags=%M_FLAGS%
-    EXIT /B 0
+    :: Snapshot at once. The resolvers below parse flags of their own and do not
+    :: SETLOCAL, so reading GLOBAL_Flag* after one of them would find it cleared.
+    :: Positionals are read rather than %1..%3 so a flag can never be mistaken
+    :: for a name: an absent project arrives as "" and simply is not defined.
+    SET "Function_SuiteId=%GLOBAL_FlagArg1%"
+    SET "Function_ProjectId=%GLOBAL_FlagArg2%"
+    SET "Function_ActionId=%GLOBAL_FlagArg3%"
+    SET "Function_Argc=%GLOBAL_FlagArgc%"
+    SET "Function_Prompt=%GLOBAL_FlagArgs%"
+    SET "Function_Projects=%GLOBAL_FlagProjects%"
+    SET "Function_Passthru=%GLOBAL_FlagPassthru%"
+    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
 
-:MISSING_SUITE
-    ECHO LeprechaunCLI:FnDbDispatch[E]: Missing required flag --suite ^<SUITE^>
-    GOTO :USAGE
+    SET "Local_Index=4"
+    GOTO CollectArgs
 
-:MISSING_ACTION
-    ECHO LeprechaunCLI:FnDbDispatch[E]: Missing action
-    GOTO :USAGE
+:CollectArgs
+    :: Everything after the action is an ARG.
+    IF %Local_Index% GTR %Function_Argc% GOTO CollectedArgs
+    CALL SET "Local_Token=%%GLOBAL_FlagArg%Local_Index%%%"
+    SET "Function_Args=%Function_Args% %Local_Token%"
+    SET /A Local_Index+=1
+    GOTO CollectArgs
 
-:UNKNOWN_ACTION
-    ECHO LeprechaunCLI:FnDbDispatch[E]: Unknown db action "%M_ACTION%"
-    GOTO :USAGE
+:CollectedArgs
+    IF DEFINED Function_Prompt SET "Function_Args=%Function_Args% %Function_Prompt%"
+    IF DEFINED Function_Args SET "Function_Args=%Function_Args:~1%"
+    GOTO Validate
 
-:USAGE
+:Validate
+    IF NOT DEFINED Function_SuiteId (
+        SET "Function_Error=Missing required argument <SuiteId>"
+        GOTO Failure
+    )
+
+    IF NOT DEFINED Function_ActionId (
+        SET "Function_Error=Missing action for the %Function_Module% module"
+        GOTO Usage
+    )
+
+    FOR %%A IN (%Function_Actions%) DO FOR /F "tokens=1,2 delims=:" %%X IN ("%%A") DO IF /I "%%X"=="%Function_ActionId%" SET "Function_Suffix=%%Y"
+
+    IF NOT DEFINED Function_Suffix (
+        SET "Function_Error=Unknown %Function_Module% action %Function_ActionId%"
+        GOTO Usage
+    )
+
+    :: An empty project or arg list is omitted rather than passed as "", so the
+    :: leaf sees one of its three documented forms and --args never arrives bare.
+    IF DEFINED Function_ProjectId SET "Function_ProjectArg="%Function_ProjectId%""
+    IF DEFINED Function_Args SET "Function_Tail=%Function_Tail% --args %Function_Args%"
+    IF DEFINED Function_Projects SET "Function_Tail=%Function_Tail% -p %Function_Projects%"
+    IF DEFINED Function_Passthru SET "Function_Tail=%Function_Tail% %Function_Passthru%"
+    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    GOTO Main
+
+:Usage
+    CALL FnEtcLogError FnDbDispatch "%Function_Error%"
+    SET "Function_Error="
     ECHO   Usage: ^<SUITE^> db ^<ACTION^> ^<ARGS...^> ^<FLAGS...^>
     ECHO          ^<SUITE^> ^<PROJECT^> db ^<ACTION^> ^<ARGS...^>
     ECHO          ^<SUITE^> db ^<ACTION^> -p ^<PROJECTS...^>
     ECHO   Actions: migrate seed reset
-    EXIT /B 1
+    GOTO Failure
+
+:Failure
+    SET "Function_ReturnCode=1"
+    GOTO Destructor
+
+:Destructor
+    :: GOTO takes no arguments, so the return code travels in a variable. A
+    :: called function that already logged its own failure leaves Function_Error
+    :: empty, which is what keeps one fault from being reported at every layer.
+    IF DEFINED Function_Error CALL FnEtcLogError FnDbDispatch "%Function_Error%"
+    EXIT /B %Function_ReturnCode%
