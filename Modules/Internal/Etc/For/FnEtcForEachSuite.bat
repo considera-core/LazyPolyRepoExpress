@@ -11,64 +11,64 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    CALL FnEtcDataSuites "%Function_OrgId%"
+    CALL FnEtcDataSuites "%Input_OrgId%"
     IF ERRORLEVEL 1 GOTO Failure
 
     :: No active suites is a valid empty collection, not a failure: the name was
     :: already resolved upstream, so this is a real organization that simply has
     :: nothing scaffolded yet. A global fan out must not stop on it.
-    IF NOT DEFINED GLOBAL_DataSuitesActive (
-        CALL FnEtcLogInfo FnEtcForEachSuite "No active suites in organization %Function_OrgId%, skipping"
+    IF NOT DEFINED Output_Data_SuitesActive (
+        CALL FnEtcLogInfo FnEtcForEachSuite "No active suites in organization %Input_OrgId%, skipping"
         GOTO Destructor
     )
 
-    FOR %%S IN (%GLOBAL_DataSuitesActive%) DO (
-        CALL %Function_FunctionName% "%%S" %Function_Tail%
-        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    FOR %%S IN (%Output_Data_SuitesActive%) DO (
+        CALL %Input_FunctionName% "%%S" %Input_Tail%
+        IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     )
 
     GOTO Destructor
 
 :Constructor
-    SET "Function_OrgId=%~1"
-    SET "Function_FunctionName=%~2"
-    SET "Function_Tail="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_OrgId=%~1"
+    SET "Input_FunctionName=%~2"
+    SET "Input_Tail="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
     SHIFT
     SHIFT
     GOTO Collect
 
 :Collect
     IF [%1]==[] GOTO Collected
-    SET "Function_Tail=%Function_Tail% %1"
+    SET "Input_Tail=%Input_Tail% %1"
     SHIFT
     GOTO Collect
 
 :Collected
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_OrgId (
-        SET "Function_Error=Missing required argument <OrgId>"
+    IF NOT DEFINED Input_OrgId (
+        SET "Input_Error=Missing required argument <OrgId>"
         GOTO Failure
     )
 
-    IF NOT DEFINED Function_FunctionName (
-        SET "Function_Error=Missing required argument <FunctionName>"
+    IF NOT DEFINED Input_FunctionName (
+        SET "Input_Error=Missing required argument <FunctionName>"
         GOTO Failure
     )
     GOTO Main
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
-    IF DEFINED Function_Error CALL FnEtcLogError FnEtcForEachSuite "%Function_Error%"
-    SET "Function_OrgId="
-    SET "Function_FunctionName="
-    SET "Function_Tail="
-    SET "Function_Error="
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL FnEtcLogError FnEtcForEachSuite "%Input_Error%"
+    SET "Input_OrgId="
+    SET "Input_FunctionName="
+    SET "Input_Tail="
+    SET "Input_Error="
+    EXIT /B %Input_ReturnCode%

@@ -18,93 +18,93 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    IF /I "%Function_EntryId%"=="Global"       GOTO ShapeGlobal
-    IF /I "%Function_EntryId%"=="Organization" GOTO ShapeOrganization
-    IF /I "%Function_EntryId%"=="Suite"        GOTO ShapeSuite
-    SET "Function_Error=Unknown entry point %Function_EntryId%"
+    IF /I "%Input_EntryId%"=="Global"       GOTO ShapeGlobal
+    IF /I "%Input_EntryId%"=="Organization" GOTO ShapeOrganization
+    IF /I "%Input_EntryId%"=="Suite"        GOTO ShapeSuite
+    SET "Input_Error=Unknown entry point %Input_EntryId%"
     GOTO Failure
 
 :ShapeGlobal
-    IF "%Function_Argc%"=="4" (
-        SET "Function_OrgId=%Function_Arg1%"
-        SET "Function_SuiteId=%Function_Arg2%"
-        SET "Function_ProjectId=%Function_Arg3%"
-        SET "Function_CommandId=%Function_Arg4%"
+    IF "%Input_Argc%"=="4" (
+        SET "Input_OrgId=%Input_Arg1%"
+        SET "Input_SuiteId=%Input_Arg2%"
+        SET "Input_ProjectId=%Input_Arg3%"
+        SET "Input_CommandId=%Input_Arg4%"
         GOTO Shaped
     )
-    IF "%Function_Argc%"=="2" (
-        SET "Function_OrgId=%Function_Arg1%"
-        SET "Function_CommandId=%Function_Arg2%"
+    IF "%Input_Argc%"=="2" (
+        SET "Input_OrgId=%Input_Arg1%"
+        SET "Input_CommandId=%Input_Arg2%"
         GOTO Shaped
     )
     GOTO BadShape
 
 :ShapeOrganization
-    SET "Function_OrgId=%Function_ValueId%"
-    IF "%Function_Argc%"=="3" (
-        SET "Function_SuiteId=%Function_Arg1%"
-        SET "Function_ProjectId=%Function_Arg2%"
-        SET "Function_CommandId=%Function_Arg3%"
+    SET "Input_OrgId=%Input_ValueId%"
+    IF "%Input_Argc%"=="3" (
+        SET "Input_SuiteId=%Input_Arg1%"
+        SET "Input_ProjectId=%Input_Arg2%"
+        SET "Input_CommandId=%Input_Arg3%"
         GOTO Shaped
     )
-    IF "%Function_Argc%"=="1" (
-        SET "Function_CommandId=%Function_Arg1%"
+    IF "%Input_Argc%"=="1" (
+        SET "Input_CommandId=%Input_Arg1%"
         GOTO Shaped
     )
     GOTO BadShape
 
 :ShapeSuite
-    SET "Function_SuiteId=%Function_ValueId%"
-    IF "%Function_Argc%"=="2" (
-        SET "Function_ProjectId=%Function_Arg1%"
-        SET "Function_CommandId=%Function_Arg2%"
+    SET "Input_SuiteId=%Input_ValueId%"
+    IF "%Input_Argc%"=="2" (
+        SET "Input_ProjectId=%Input_Arg1%"
+        SET "Input_CommandId=%Input_Arg2%"
         GOTO Shaped
     )
     GOTO BadShape
 
 :Shaped
-    IF NOT DEFINED Function_CommandId GOTO BadShape
+    IF NOT DEFINED Input_CommandId GOTO BadShape
 
-    IF DEFINED Function_SuiteId (
-        CALL :OneSuite "%Function_SuiteId%"
+    IF DEFINED Input_SuiteId (
+        CALL :OneSuite "%Input_SuiteId%"
         GOTO Destructor
     )
 
-    IF NOT DEFINED Function_OrgId GOTO BadShape
+    IF NOT DEFINED Input_OrgId GOTO BadShape
 
     :: Fanned out here rather than through FnEtcForEachSuite, because the work
     :: per suite is a subroutine in this file and cannot be reached by name. The
     :: FOR list is expanded when the line is parsed, so the reads inside the body
     :: cannot disturb the set being iterated.
-    CALL FnEtcDataSuites "%Function_OrgId%"
+    CALL FnEtcDataSuites "%Input_OrgId%"
     IF ERRORLEVEL 1 GOTO Failure
 
-    IF NOT DEFINED GLOBAL_DataSuitesActive (
-        SET "Function_Error=No active suites in organization %Function_OrgId%"
+    IF NOT DEFINED Output_Data_SuitesActive (
+        SET "Input_Error=No active suites in organization %Input_OrgId%"
         GOTO Failure
     )
 
-    FOR %%S IN (%GLOBAL_DataSuitesActive%) DO (
+    FOR %%S IN (%Output_Data_SuitesActive%) DO (
         CALL :OneSuite "%%S"
-        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+        IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     )
     GOTO Destructor
 
 :BadShape
-    SET "Function_Error=Not a valid command for a %Function_EntryId% entry point"
+    SET "Input_Error=Not a valid command for a %Input_EntryId% entry point"
     GOTO Failure
 
 :Constructor
-    SET "Function_EntryId=%~1"
-    SET "Function_ValueId=%~2"
-    SET "Function_Command="
-    SET "Function_OrgId="
-    SET "Function_SuiteId="
-    SET "Function_ProjectId="
-    SET "Function_CommandId="
-    SET "Function_Tail="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_EntryId=%~1"
+    SET "Input_ValueId=%~2"
+    SET "Input_Command="
+    SET "Input_OrgId="
+    SET "Input_SuiteId="
+    SET "Input_ProjectId="
+    SET "Input_CommandId="
+    SET "Input_Tail="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
 
     SHIFT
     SHIFT
@@ -112,49 +112,49 @@ GOTO Constructor
 
 :Collect
     IF [%1]==[] GOTO Collected
-    SET "Function_Command=%Function_Command% %1"
+    SET "Input_Command=%Input_Command% %1"
     SHIFT
     GOTO Collect
 
 :Collected
-    IF DEFINED Function_Command SET "Function_Command=%Function_Command:~1%"
+    IF DEFINED Input_Command SET "Input_Command=%Input_Command:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_EntryId (
-        SET "Function_Error=Missing required argument <EntryId>"
+    IF NOT DEFINED Input_EntryId (
+        SET "Input_Error=Missing required argument <EntryId>"
         GOTO Failure
     )
 
-    CALL FnEtcFlags %Function_Command%
+    CALL FnEtcFlags %Input_Command%
     IF ERRORLEVEL 1 GOTO Failure
 
     :: Snapshotted at once, for the same reason as FnEtcDispatch: the readers
     :: below parse flags of their own and do not SETLOCAL.
-    SET "Function_Argc=%GLOBAL_FlagArgc%"
-    SET "Function_Arg1=%GLOBAL_FlagArg1%"
-    SET "Function_Arg2=%GLOBAL_FlagArg2%"
-    SET "Function_Arg3=%GLOBAL_FlagArg3%"
-    SET "Function_Arg4=%GLOBAL_FlagArg4%"
-    IF DEFINED GLOBAL_FlagArgs SET "Function_Tail=%Function_Tail% %GLOBAL_FlagArgs%"
-    IF DEFINED GLOBAL_FlagPassthru SET "Function_Tail=%Function_Tail% %GLOBAL_FlagPassthru%"
-    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    SET "Input_Argc=%GLOBAL_FlagArgc%"
+    SET "Input_Arg1=%GLOBAL_FlagArg1%"
+    SET "Input_Arg2=%GLOBAL_FlagArg2%"
+    SET "Input_Arg3=%GLOBAL_FlagArg3%"
+    SET "Input_Arg4=%GLOBAL_FlagArg4%"
+    IF DEFINED GLOBAL_FlagArgs SET "Input_Tail=%Input_Tail% %GLOBAL_FlagArgs%"
+    IF DEFINED GLOBAL_FlagPassthru SET "Input_Tail=%Input_Tail% %GLOBAL_FlagPassthru%"
+    SET "Input_DryRun=%GLOBAL_FlagDryRun%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Main
 
 :OneSuite
     CALL FnEtcDataProjects "%~1"
     IF ERRORLEVEL 1 EXIT /B 1
 
-    IF NOT DEFINED Function_ProjectId GOTO AllExternal
-    CALL :OneProject "%~1" "%Function_ProjectId%"
+    IF NOT DEFINED Input_ProjectId GOTO AllExternal
+    CALL :OneProject "%~1" "%Input_ProjectId%"
     EXIT /B %ERRORLEVEL%
 
 :AllExternal
-    IF NOT DEFINED GLOBAL_DataProjectsExternal EXIT /B 0
-    FOR %%P IN (%GLOBAL_DataProjectsExternal%) DO (
+    IF NOT DEFINED Output_Data_ProjectsExternal EXIT /B 0
+    FOR %%P IN (%Output_Data_ProjectsExternal%) DO (
         CALL :OneProject "%~1" "%%P"
-        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+        IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     )
     EXIT /B 0
 
@@ -162,10 +162,10 @@ GOTO Constructor
     CALL FnEtcResolveProject "%~1" "%~2"
     IF ERRORLEVEL 1 EXIT /B 1
 
-    IF /I NOT "%GLOBAL_ResolvedProjectIsExternal%"=="true" (
+    IF /I NOT "%Output_Resolved_ProjectIsExternal%"=="true" (
         CALL FnEtcLogError FnEtcDispatchExternal "Project %~2 is not external, so it has no commands of its own"
-        ECHO   External projects: %GLOBAL_DataProjectsExternal%
-        SET "Function_ReturnCode=1"
+        ECHO   External projects: %Output_Data_ProjectsExternal%
+        SET "Input_ReturnCode=1"
         EXIT /B 1
     )
 
@@ -174,25 +174,25 @@ GOTO Constructor
     :: of those scripts being written.
     WHERE Fn%~2Dispatch >NUL 2>&1
     IF ERRORLEVEL 1 (
-        CALL FnEtcLogRun FnEtcDispatchExternal "fn=Fn%~2Dispatch suite=%~1 project=%~2 command=%Function_CommandId% flags=%Function_Tail%"
-        IF DEFINED Function_DryRun EXIT /B 0
+        CALL FnEtcLogRun FnEtcDispatchExternal "fn=Fn%~2Dispatch suite=%~1 project=%~2 command=%Input_CommandId% flags=%Input_Tail%"
+        IF DEFINED Input_DryRun EXIT /B 0
         CALL FnEtcLogError FnEtcDispatchExternal "Not implemented yet: Fn%~2Dispatch"
-        SET "Function_ReturnCode=1"
+        SET "Input_ReturnCode=1"
         EXIT /B 1
     )
 
-    CALL Fn%~2Dispatch "%~1" "%Function_CommandId%" %Function_Tail%
-    IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    CALL Fn%~2Dispatch "%~1" "%Input_CommandId%" %Input_Tail%
+    IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     EXIT /B 0
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
-    IF DEFINED Function_Error CALL FnEtcLogError FnEtcDispatchExternal "%Function_Error%"
-    IF DEFINED Function_Error (
+    IF DEFINED Input_Error CALL FnEtcLogError FnEtcDispatchExternal "%Input_Error%"
+    IF DEFINED Input_Error (
         ECHO   Internal: ^<MODULE^> ^<ACTION^> ^<ARGS...^> ^<FLAGS...^>
         ECHO   External: ^<PROJECT^> ^<COMMAND^>
     )
-    EXIT /B %Function_ReturnCode%
+    EXIT /B %Input_ReturnCode%

@@ -1,16 +1,24 @@
-:: FnGitBranch <ProjectId> <...Flags>
+:: FnGitBranch <OrgId> <SuiteId> <ProjectId>
 
 @ECHO OFF
 
-SET "Input_ProjectId=%~1"
+:: INPUT
+SET "Input_OrgId=%~1"
+SET "Input_SuiteId=%~2"
+SET "Input_ProjectId=%~3"
 
-IF NOT DEFINED Input_ProjectId (
-    ECHO "Missing required argument <ProjectId>"
-    EXIT /B 1
-)
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument ^<OrgId^>" & EXIT /B 1
+IF NOT DEFINED Input_SuiteId CALL FnEtcLogError %~n0 "Missing required argument ^<SuiteId^>" & EXIT /B 1
+IF NOT DEFINED Input_ProjectId CALL FnEtcLogError %~n0 "Missing required argument ^<ProjectId^>" & EXIT /B 1
 
-CALL FnEtcFlags %*
-CALL FnEtcResolveProject "%Input_ProjectId%"
+:: RESOLVE
+CALL FnEtcResolveOrganization "%Input_OrgId%"
+CALL FnEtcResolveSuite "%Input_OrgId%" "%Input_SuiteId%"
+CALL FnEtcResolveProject "%Input_OrgId%" "%Input_SuiteId%" "%Input_ProjectId%"
 IF ERRORLEVEL 1 EXIT /B 1
 
-CALL GIT -C "%GLOBAL_ResolvedProjectRootPath%" "branch" "--show-current"
+ECHO Current branch for %Input_OrgId%/%Input_SuiteId%/%Input_ProjectId%
+git -C "%Output_Resolved_OrgRootPath%\%Output_Resolved_SuiteRootPath%\%Output_Resolved_ProjectRootPath%" branch --show-current
+IF ERRORLEVEL 1 EXIT /B 1
+
+EXIT /B 0

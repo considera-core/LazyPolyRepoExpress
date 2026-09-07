@@ -149,7 +149,7 @@ EXIT /B 0
     SET "T_SELECT="
     IF %FLAG_ARGC% LSS 2 GOTO :SELECTIONS_ARGS
     CALL FnEtcResolveSuite "%T_SUITE%" >NUL 2>&1
-    IF NOT ERRORLEVEL 1 CALL FnEtcCsvProjects "%GLOBAL_ResolvedSuiteOrgId%" "%T_SUITE%" >NUL 2>&1
+    IF NOT ERRORLEVEL 1 CALL FnEtcCsvProjects "%Output_Resolved_SuiteOrgId%" "%T_SUITE%" >NUL 2>&1
     FOR /L %%I IN (2,1,%FLAG_ARGC%) DO CALL :SELECT %%I
 
 :SELECTIONS_ARGS

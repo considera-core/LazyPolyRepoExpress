@@ -22,110 +22,110 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    IF DEFINED Function_ProjectId GOTO Base
+    IF DEFINED Input_ProjectId GOTO Base
 
     :: Fan out. FnEtcForEachProject re-enters this script once per project, so
     :: the recursion terminates at the base case below.
-    CALL FnEtcForEachProject "%Function_SuiteId%" FnAiClaude %Function_Tail%
+    CALL FnEtcForEachProject "%Input_SuiteId%" FnAiClaude %Input_Tail%
     IF ERRORLEVEL 1 GOTO Failure
     GOTO Destructor
 
 :Base
-    CALL FnEtcResolveProject "%Function_SuiteId%" "%Function_ProjectId%"
+    CALL FnEtcResolveProject "%Input_SuiteId%" "%Input_ProjectId%"
     IF ERRORLEVEL 1 GOTO Failure
 
     :: Reported before the directory is checked, so a dry run works on a machine
     :: where the suite is not checked out.
-    IF DEFINED Function_DryRun (
-        CALL FnEtcLogRun FnAiClaude "fn=FnAiClaude suite=%Function_SuiteId% project=%Function_ProjectId% path=%GLOBAL_ResolvedProjectRootPath% prompt=%Function_Prompt% flags=%Function_Passthru%"
+    IF DEFINED Input_DryRun (
+        CALL FnEtcLogRun FnAiClaude "fn=FnAiClaude suite=%Input_SuiteId% project=%Input_ProjectId% path=%Output_Resolved_ProjectRootPath% prompt=%Input_Prompt% flags=%Input_Passthru%"
         GOTO Destructor
     )
 
-    IF NOT EXIST "%GLOBAL_ResolvedProjectRootPath%" (
-        SET "Function_Error=Project path not found: %GLOBAL_ResolvedProjectRootPath%"
+    IF NOT EXIST "%Output_Resolved_ProjectRootPath%" (
+        SET "Input_Error=Project path not found: %Output_Resolved_ProjectRootPath%"
         GOTO Failure
     )
 
-    CALL FnEtcLogInfo FnAiClaude "Running Claude Code for %Function_SuiteId%/%Function_ProjectId% (%GLOBAL_ResolvedProjectName%)"
+    CALL FnEtcLogInfo FnAiClaude "Running Claude Code for %Input_SuiteId%/%Input_ProjectId% (%Output_Resolved_ProjectName%)"
 
-    IF DEFINED Function_Verbose (
-        CALL FnEtcLogDebug FnAiClaude "path %GLOBAL_ResolvedProjectRootPath%"
+    IF DEFINED Input_Verbose (
+        CALL FnEtcLogDebug FnAiClaude "path %Output_Resolved_ProjectRootPath%"
     )
 
-    IF DEFINED Function_Verbose IF DEFINED Function_Prompt (
-        CALL FnEtcLogDebug FnAiClaude "prompt %Function_Prompt%"
+    IF DEFINED Input_Verbose IF DEFINED Input_Prompt (
+        CALL FnEtcLogDebug FnAiClaude "prompt %Input_Prompt%"
     )
 
-    IF DEFINED Function_Here GOTO Here
+    IF DEFINED Input_Here GOTO Here
     GOTO Spawn
 
 :Here
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
+    PUSHD "%Output_Resolved_ProjectRootPath%"
     IF ERRORLEVEL 1 (
-        SET "Function_Error=Could not enter %GLOBAL_ResolvedProjectRootPath%"
+        SET "Input_Error=Could not enter %Output_Resolved_ProjectRootPath%"
         GOTO Failure
     )
-    CALL claude %Function_Prompt%
-    SET "Function_ReturnCode=%ERRORLEVEL%"
+    CALL claude %Input_Prompt%
+    SET "Input_ReturnCode=%ERRORLEVEL%"
     POPD
     GOTO Destructor
 
 :Spawn
     :: A new Windows Terminal tab per project, so a fan out over a whole suite
     :: does not serialise behind one interactive session.
-    wt -w 0 -d "%GLOBAL_ResolvedProjectRootPath%" --title "Claude Code - %Function_ProjectId%" cmd /k claude %Function_Prompt%
+    wt -w 0 -d "%Output_Resolved_ProjectRootPath%" --title "Claude Code - %Input_ProjectId%" cmd /k claude %Input_Prompt%
     IF ERRORLEVEL 1 (
-        SET "Function_Error=Could not spawn a window. Is Windows Terminal (wt) installed? Add --here to run in this window instead."
+        SET "Input_Error=Could not spawn a window. Is Windows Terminal (wt) installed? Add --here to run in this window instead."
         GOTO Failure
     )
     GOTO Destructor
 
 :Constructor
-    SET "Function_Tail="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_Tail="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
 
     CALL FnEtcFlags %*
 
     :: Read from the parsed positionals rather than %1 and %2. FnEtcFlags counts
     :: only positionals, so a flag can never be mistaken for the project: in the
     :: fan out form "<suite> --args hello" there simply is no positional 2.
-    SET "Function_SuiteId=%GLOBAL_FlagArg1%"
-    SET "Function_ProjectId=%GLOBAL_FlagArg2%"
+    SET "Input_SuiteId=%GLOBAL_FlagArg1%"
+    SET "Input_ProjectId=%GLOBAL_FlagArg2%"
 
     :: Snapshotted for the same reason: FnEtcResolveProject parses flags of its
     :: own and does not SETLOCAL, so GLOBAL_Flag* is gone by the time the base
     :: case below runs.
-    SET "Function_Prompt=%GLOBAL_FlagArgs%"
-    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
-    SET "Function_Verbose=%GLOBAL_FlagVerbose%"
-    SET "Function_Here=%GLOBAL_FlagHere%"
-    SET "Function_Passthru=%GLOBAL_FlagPassthru%"
+    SET "Input_Prompt=%GLOBAL_FlagArgs%"
+    SET "Input_DryRun=%GLOBAL_FlagDryRun%"
+    SET "Input_Verbose=%GLOBAL_FlagVerbose%"
+    SET "Input_Here=%GLOBAL_FlagHere%"
+    SET "Input_Passthru=%GLOBAL_FlagPassthru%"
 
     :: Rebuilt rather than shifted, so the recursion carries its prompt and flags
     :: regardless of the order they were given in. The project is deliberately
     :: left out: FnEtcForEachProject supplies that.
-    IF DEFINED Function_Prompt SET "Function_Tail=%Function_Tail% --args %Function_Prompt%"
-    IF DEFINED GLOBAL_FlagProjects SET "Function_Tail=%Function_Tail% -p %GLOBAL_FlagProjects%"
-    IF DEFINED Function_Passthru SET "Function_Tail=%Function_Tail% %Function_Passthru%"
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    IF DEFINED Input_Prompt SET "Input_Tail=%Input_Tail% --args %Input_Prompt%"
+    IF DEFINED GLOBAL_FlagProjects SET "Input_Tail=%Input_Tail% -p %GLOBAL_FlagProjects%"
+    IF DEFINED Input_Passthru SET "Input_Tail=%Input_Tail% %Input_Passthru%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_SuiteId (
-        SET "Function_Error=Missing required argument <SuiteId>"
+    IF NOT DEFINED Input_SuiteId (
+        SET "Input_Error=Missing required argument <SuiteId>"
         GOTO Failure
     )
     GOTO Main
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
-    IF DEFINED Function_Error CALL FnEtcLogError FnAiClaude "%Function_Error%"
-    SET "Function_SuiteId="
-    SET "Function_ProjectId="
-    SET "Function_Tail="
-    SET "Function_Error="
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL FnEtcLogError FnAiClaude "%Input_Error%"
+    SET "Input_SuiteId="
+    SET "Input_ProjectId="
+    SET "Input_Tail="
+    SET "Input_Error="
+    EXIT /B %Input_ReturnCode%

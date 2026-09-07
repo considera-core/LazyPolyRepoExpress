@@ -1,30 +1,24 @@
 :: FnEtcLogWarning <Function> <Message>
-:: leprechaun function log warning <Function> <Message>
-:: -- Writes a warning as LeprechaunCLI:<Function>[W]: <Message>.
-:: --
-:: -- NOTE: The message is captured BEFORE delayed expansion is enabled, then
-:: --       echoed through it. That is what lets a message carry <, >, & or !
-:: --       literally: a plain ECHO would read them as operators, and capturing
-:: --       them under delayed expansion would eat the "!". Messages therefore
-:: --       need no caret escaping, which matters because every CALL hop between
-:: --       the caller and here strips one level of caret.
+:: -- Input:
+:: --   <Function> The name of the function generating the log message.
+:: --   <Message> The warning message to be logged.
+:: -- Output:
+:: --   void stdout
 
 @ECHO OFF
-SETLOCAL EnableExtensions
 
-SET "Function_Name=%~1"
-SET "Function_Message=%~2"
+CALL FnEtcConfigGet Logs__Warning
+IF ERRORLEVEL 1 EXIT /B 1
+IF NOT "%Output_Config_Value%"=="true" EXIT /B 0
 
-IF NOT DEFINED Function_Name (
-    ECHO LeprechaunCLI:FnEtcLogWarning[F]: Missing required argument Function
-    EXIT /B 1
-)
+SET "Input_Name=%~1"
+SET "Input_Message=%~2"
 
-IF NOT DEFINED Function_Message (
-    ECHO LeprechaunCLI:FnEtcLogWarning[F]: Missing required argument Message
-    EXIT /B 1
-)
+IF NOT DEFINED Input_Name ECHO "LeprechaunCLI:%~n0[F]: Missing required argument Function" & EXIT /B 1
+IF NOT DEFINED Input_Message ECHO "LeprechaunCLI:%~n0[F]: Missing required argument Message" & EXIT /B 1
 
-SETLOCAL EnableDelayedExpansion
-ECHO LeprechaunCLI:!Function_Name![W]: !Function_Message!
+CALL FnEtcConfigGet "Logs__Warning__%Input_Name%"
+IF "%Output_Config_Value%"=="false" EXIT /B 0
+
+ECHO LeprechaunCLI:%Input_Name%[W]: %Input_Message%
 EXIT /B 0

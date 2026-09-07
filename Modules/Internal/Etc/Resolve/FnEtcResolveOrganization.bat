@@ -1,77 +1,57 @@
-:: FnEtcResolveOrganization <OrgId> <Flag[]>
-:: leprechaun function resolve Organization <OrgId>
-:: -- Resolves an organization from the data store, and exports:
-:: --   GLOBAL_ResolvedOrgId            (OrganizationCommandIdentifier) command identifier
-:: --   GLOBAL_ResolvedOrgIdentifier    (OrganizationFriendlyIdentifier) directory name
-:: --   GLOBAL_ResolvedOrgName          (OrganizationFriendlyName) friendly name
-:: --   GLOBAL_ResolvedOrgRootPath      (OrganizationRootPath) root path
-:: --   GLOBAL_ResolvedOrgDataPath      (Computed) absolute path to this org's data directory
-:: -- Flags:
-:: --   --refresh: resolve again even when this organization is already in scope
-:: --
-:: -- NOTE: Locals are Export_ rather than Function_ on purpose. With no
-:: --       SETLOCAL, a Function_ name here would be the CALLER's variable,
-:: --       and clearing one on the way out would blank it under them.
-:: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_ResolvedOrg values.
-:: -- NOTE: The row is read in a CALLed subroutine rather than inline in the FOR
-:: --       body. A FOR body is parsed once, so %Local_OrgIndex% inside it would
-:: --       expand to its value before the first iteration and every row would
-:: --       read as row 0. Each CALL is parsed afresh, so the index is live.
+:: FnEtcResolveOrganization <OrgId>
+:: -- Output:
+:: --   Output_Resolved_OrgId            (OrganizationCommandIdentifier) command identifier
+:: --   Output_Resolved_OrgIdentifier    (OrganizationFriendlyIdentifier) directory name
+:: --   Output_Resolved_OrgName          (OrganizationFriendlyName) friendly name
+:: --   Output_Resolved_OrgRootPath      (OrganizationRootPath) root path
 
 @ECHO OFF
 
-SET "Export_OrgId=%~1"
+:: INPUT
+SET "Input_OrgId=%~1"
 
-IF NOT DEFINED Export_OrgId (
-    CALL FnEtcLogError FnEtcResolveOrganization "Missing required argument <OrgId>"
-    EXIT /B 1
-)
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument <OrgId>" & EXIT /B 1
 
-CALL FnEtcFlags %*
+:: CACHE
+CALL FnEtcCacheGet OrgId "[%Input_OrgId%]" || CALL FnEtcDataOrganizations
+CALL FnEtcCacheGet OrgIdentifier "[%Input_OrgId%]" || CALL FnEtcDataOrganizations
+CALL FnEtcCacheGet OrgName "[%Input_OrgId%]" || CALL FnEtcDataOrganizations
+CALL FnEtcCacheGet OrgDescription "[%Input_OrgId%]" || CALL FnEtcDataOrganizations
+CALL FnEtcCacheGet OrgRootPath "[%Input_OrgId%]" || CALL FnEtcDataOrganizations
 
-IF /I "%GLOBAL_ResolvedOrgId%"=="%Export_OrgId%" IF NOT DEFINED GLOBAL_FlagRefresh (
-    SET "Export_OrgId="
+IF DEFINED Output_Cache_OrgId IF DEFINED Output_Cache_OrgIdentifier IF DEFINED Output_Cache_OrgName IF DEFINED Output_Cache_OrgDescription IF DEFINED Output_Cache_OrgRootPath (
+    SET "Output_Resolved_OrgId=%Output_Cache_OrgId%"
+    SET "Output_Resolved_OrgIdentifier=%Output_Cache_OrgIdentifier%"
+    SET "Output_Resolved_OrgName=%Output_Cache_OrgName%"
+    SET "Output_Resolved_OrgDescription=%Output_Cache_OrgDescription%"
+    SET "Output_Resolved_OrgRootPath=%Output_Cache_OrgRootPath%"
     EXIT /B 0
 )
 
-SET "GLOBAL_ResolvedOrgId="
-SET "GLOBAL_ResolvedOrgIdentifier="
-SET "GLOBAL_ResolvedOrgName="
-SET "GLOBAL_ResolvedOrgRootPath="
-SET "GLOBAL_ResolvedOrgDataPath="
-
-CALL FnEtcEnvGetDataPath
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcDataOrganizations
-IF ERRORLEVEL 1 EXIT /B 1
-
-SET "Local_OrgIndex=0"
-FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :Row "%%O"
-
-IF NOT DEFINED GLOBAL_ResolvedOrgId (
-    CALL FnEtcLogError FnEtcResolveOrganization "Unknown organization %Export_OrgId%"
-    ECHO   Organizations: %GLOBAL_DataOrgs%
-    SET "Export_OrgId="
-    SET "Local_OrgIndex="
-    EXIT /B 1
+:: MAPPING
+SETLOCAL EnableDelayedExpansion
+SET "Local_Index=0"
+FOR %%O IN (%Output_Data_Orgs%) DO (
+    IF NOT DEFINED Output_Resolved_OrgId (
+        IF /I NOT "%Input_OrgId%"=="%%O" (
+            SET /A Local_Index+=1
+        ) ELSE (
+            CALL SET "Local_OrgId=%%O"
+            CALL SET "Local_OrgIdentifier=!Output_Data_Org%Local_Index%Identifier!"
+            CALL SET "Local_OrgName=!Output_Data_Org%Local_Index%Name!"
+            CALL SET "Local_OrgDescription=!Output_Data_Org%Local_Index%Description!"
+            CALL SET "Local_OrgRootPath=!Output_Data_Org%Local_Index%RootPath!"
+        )
+    )
 )
 
-SET "Export_OrgId="
-SET "Local_OrgIndex="
+ENDLOCAL ^
+    & SET "Output_Resolved_OrgId=%Local_OrgId%" ^
+    & SET "Output_Resolved_OrgIdentifier=%Local_OrgIdentifier%" ^
+    & SET "Output_Resolved_OrgName=%Local_OrgName%" ^
+    & SET "Output_Resolved_OrgDescription=%Local_OrgDescription%" ^
+    & SET "Output_Resolved_OrgRootPath=%Local_OrgRootPath%"
+
+IF NOT DEFINED Output_Resolved_OrgId CALL FnEtcLogError %~n0 "Unknown organization %Input_OrgId%" & EXIT /B 1
+
 EXIT /B 0
-
-:Row
-    IF DEFINED GLOBAL_ResolvedOrgId EXIT /B 0
-    IF /I NOT "%~1"=="%Export_OrgId%" GOTO RowNext
-
-    CALL SET "GLOBAL_ResolvedOrgIdentifier=%%GLOBAL_DataOrg%Local_OrgIndex%Identifier%%"
-    CALL SET "GLOBAL_ResolvedOrgName=%%GLOBAL_DataOrg%Local_OrgIndex%Name%%"
-    CALL SET "GLOBAL_ResolvedOrgRootPath=%%GLOBAL_DataOrg%Local_OrgIndex%RootPath%%"
-    SET "GLOBAL_ResolvedOrgId=%Export_OrgId%"
-    SET "GLOBAL_ResolvedOrgDataPath=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedOrgIdentifier%"
-    EXIT /B 0
-
-:RowNext
-    SET /A Local_OrgIndex+=1
-    EXIT /B 0

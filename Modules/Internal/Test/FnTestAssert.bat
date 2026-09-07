@@ -39,7 +39,7 @@ EXIT /B 1
     CALL FnEtcCsvOrgs
     IF ERRORLEVEL 1 EXIT /B 1
     SET "A_SEEN="
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :COLLECT_SUITES "%%O"
+    FOR %%O IN (%Output_Data_Orgs%) DO CALL :COLLECT_SUITES "%%O"
     GOTO :REPORT
 
 :COLLECT_SUITES
@@ -59,19 +59,19 @@ EXIT /B 1
 :ORG_DIRS
     CALL FnEtcCsvOrgs
     IF ERRORLEVEL 1 EXIT /B 1
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :CHECK_ORG_DIR "%%O"
+    FOR %%O IN (%Output_Data_Orgs%) DO CALL :CHECK_ORG_DIR "%%O"
     GOTO :REPORT
 
 :CHECK_ORG_DIR
     CALL SET "A_DIR=%%GLOBAL_ORG_%~1_DIR%%"
-    IF NOT EXIST "%GLOBAL_DataPath%\Organizations\%A_DIR%" CALL :FAIL "organization ""%~1"" declares friendly identifier ""%A_DIR%"" but no such directory exists"
+    IF NOT EXIST "%Output_Env_DataPath%\Organizations\%A_DIR%" CALL :FAIL "organization ""%~1"" declares friendly identifier ""%A_DIR%"" but no such directory exists"
     EXIT /B 0
 
 :SUITE_DIRS
     CALL FnEtcCsvOrgs
     IF ERRORLEVEL 1 EXIT /B 1
     SET "A_MODE=dir"
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :WALK_SUITES "%%O"
+    FOR %%O IN (%Output_Data_Orgs%) DO CALL :WALK_SUITES "%%O"
     GOTO :REPORT
 
 :ACTIVE_SUITES
@@ -79,7 +79,7 @@ EXIT /B 1
     CALL FnEtcCsvOrgs
     IF ERRORLEVEL 1 EXIT /B 1
     SET "A_MODE=scaffold"
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :WALK_SUITES "%%O"
+    FOR %%O IN (%Output_Data_Orgs%) DO CALL :WALK_SUITES "%%O"
     GOTO :REPORT
 
 :WALK_SUITES
@@ -94,7 +94,7 @@ EXIT /B 1
 
 :CHECK_SUITE
     CALL SET "A_DIR=%%GLOBAL_SUITE_%~1_DIR%%"
-    SET "A_PATH=%GLOBAL_DataPath%\Organizations\%A_ORG_DIR%\Suites\%A_DIR%"
+    SET "A_PATH=%Output_Env_DataPath%\Organizations\%A_ORG_DIR%\Suites\%A_DIR%"
     IF /I "%A_MODE%"=="scaffold" GOTO :CHECK_SUITE_SCAFFOLD
     IF NOT EXIST "%A_PATH%" CALL :FAIL "suite ""%~1"" declares friendly identifier ""%A_DIR%"" but no such directory exists"
     EXIT /B 0
@@ -107,7 +107,7 @@ EXIT /B 1
     CALL FnEtcCsvModules
     IF ERRORLEVEL 1 EXIT /B 1
     SET "A_MODULES=%LPRE_MODULES%"
-    FOR /R "%GLOBAL_DataPath%\Organizations" %%F IN (Modules.Definitions.csv) DO IF EXIST "%%F" CALL :CHECK_MODULE_DEFS "%%F"
+    FOR /R "%Output_Env_DataPath%\Organizations" %%F IN (Modules.Definitions.csv) DO IF EXIST "%%F" CALL :CHECK_MODULE_DEFS "%%F"
     GOTO :REPORT
 
 :CHECK_MODULE_DEFS
@@ -120,7 +120,7 @@ EXIT /B 1
     EXIT /B 0
 
 :APP_DEFINITIONS
-    FOR /R "%GLOBAL_DataPath%\Organizations" %%F IN (Apps.Definitions.csv) DO IF EXIST "%%F" CALL :CHECK_APP_DEFS "%%F"
+    FOR /R "%Output_Env_DataPath%\Organizations" %%F IN (Apps.Definitions.csv) DO IF EXIST "%%F" CALL :CHECK_APP_DEFS "%%F"
     GOTO :REPORT
 
 :CHECK_APP_DEFS
@@ -146,7 +146,7 @@ EXIT /B 1
     CALL FnEtcCsvOrgs
     IF ERRORLEVEL 1 EXIT /B 1
     SET "A_ACTIONS=run launch validate list claude login whoami env migrate seed reset branch branches pull home story code jetbrains rider webstorm install build test restore pack push init plan apply open tree path"
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO CALL :WALK_ORG_COLLISIONS "%%O"
+    FOR %%O IN (%Output_Data_Orgs%) DO CALL :WALK_ORG_COLLISIONS "%%O"
     GOTO :REPORT
 
 :WALK_ORG_COLLISIONS

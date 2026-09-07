@@ -21,42 +21,42 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    CALL FnEtcResolveSuite "%Function_SuiteId%"
+    CALL FnEtcResolveSuite "%Input_SuiteId%"
     IF ERRORLEVEL 1 GOTO Failure
 
-    IF DEFINED Function_ProjectId (
-        CALL FnEtcResolveProject "%Function_SuiteId%" "%Function_ProjectId%"
+    IF DEFINED Input_ProjectId (
+        CALL FnEtcResolveProject "%Input_SuiteId%" "%Input_ProjectId%"
         IF ERRORLEVEL 1 GOTO Failure
     )
 
     :: Docs.md keeps the grammar testable ahead of the leaves being written, so a
     :: dry run reports the call it would have made rather than failing on a file
     :: that is not there yet. Outside a dry run a missing leaf is a real error.
-    IF NOT EXIST "%~dp0Fn%Function_Pascal%%Function_Suffix%.bat" GOTO Missing
+    IF NOT EXIST "%~dp0Fn%Input_Pascal%%Input_Suffix%.bat" GOTO Missing
 
-    CALL leprechaun function %Function_Module% %Function_Suffix% "%Function_SuiteId%" %Function_ProjectArg% %Function_Tail%
+    CALL leprechaun function %Input_Module% %Input_Suffix% "%Input_SuiteId%" %Input_ProjectArg% %Input_Tail%
     IF ERRORLEVEL 1 GOTO Failure
 
     GOTO Destructor
 
 :Missing
-    CALL FnEtcLogRun FnGitDispatch "fn=Fn%Function_Pascal%%Function_Suffix% suite=%Function_SuiteId% project=%Function_ProjectId% args=%Function_Args% projects=%Function_Projects% flags=%Function_Passthru%"
-    IF DEFINED Function_DryRun GOTO Destructor
-    SET "Function_Error=Not implemented yet: Fn%Function_Pascal%%Function_Suffix%"
+    CALL FnEtcLogRun FnGitDispatch "fn=Fn%Input_Pascal%%Input_Suffix% suite=%Input_SuiteId% project=%Input_ProjectId% args=%Input_Args% projects=%Input_Projects% flags=%Input_Passthru%"
+    IF DEFINED Input_DryRun GOTO Destructor
+    SET "Input_Error=Not implemented yet: Fn%Input_Pascal%%Input_Suffix%"
     GOTO Failure
 
 :Constructor
-    SET "Function_Module=git"
-    SET "Function_Pascal=Git"
+    SET "Input_Module=git"
+    SET "Input_Pascal=Git"
     :: <action>:<function suffix>
-    SET "Function_Actions=branch:Branch branches:Branches pull:Pull home:Home story:Story refresh-dependabot:RefreshDependabot"
+    SET "Input_Actions=branch:Branch branches:Branches pull:Pull home:Home story:Story refresh-dependabot:RefreshDependabot"
 
-    SET "Function_Args="
-    SET "Function_Tail="
-    SET "Function_Suffix="
-    SET "Function_ProjectArg="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_Args="
+    SET "Input_Tail="
+    SET "Input_Suffix="
+    SET "Input_ProjectArg="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
 
     CALL FnEtcFlags %*
 
@@ -64,61 +64,61 @@ GOTO Constructor
     :: SETLOCAL, so reading GLOBAL_Flag* after one of them would find it cleared.
     :: Positionals are read rather than %1..%3 so a flag can never be mistaken
     :: for a name: an absent project arrives as "" and simply is not defined.
-    SET "Function_SuiteId=%GLOBAL_FlagArg1%"
-    SET "Function_ProjectId=%GLOBAL_FlagArg2%"
-    SET "Function_ActionId=%GLOBAL_FlagArg3%"
-    SET "Function_Argc=%GLOBAL_FlagArgc%"
-    SET "Function_Prompt=%GLOBAL_FlagArgs%"
-    SET "Function_Projects=%GLOBAL_FlagProjects%"
-    SET "Function_Passthru=%GLOBAL_FlagPassthru%"
-    SET "Function_DryRun=%GLOBAL_FlagDryRun%"
+    SET "Input_SuiteId=%GLOBAL_FlagArg1%"
+    SET "Input_ProjectId=%GLOBAL_FlagArg2%"
+    SET "Input_ActionId=%GLOBAL_FlagArg3%"
+    SET "Input_Argc=%GLOBAL_FlagArgc%"
+    SET "Input_Prompt=%GLOBAL_FlagArgs%"
+    SET "Input_Projects=%GLOBAL_FlagProjects%"
+    SET "Input_Passthru=%GLOBAL_FlagPassthru%"
+    SET "Input_DryRun=%GLOBAL_FlagDryRun%"
 
     SET "Local_Index=4"
     GOTO CollectArgs
 
 :CollectArgs
     :: Everything after the action is an ARG.
-    IF %Local_Index% GTR %Function_Argc% GOTO CollectedArgs
+    IF %Local_Index% GTR %Input_Argc% GOTO CollectedArgs
     CALL SET "Local_Token=%%GLOBAL_FlagArg%Local_Index%%%"
-    SET "Function_Args=%Function_Args% %Local_Token%"
+    SET "Input_Args=%Input_Args% %Local_Token%"
     SET /A Local_Index+=1
     GOTO CollectArgs
 
 :CollectedArgs
-    IF DEFINED Function_Prompt SET "Function_Args=%Function_Args% %Function_Prompt%"
-    IF DEFINED Function_Args SET "Function_Args=%Function_Args:~1%"
+    IF DEFINED Input_Prompt SET "Input_Args=%Input_Args% %Input_Prompt%"
+    IF DEFINED Input_Args SET "Input_Args=%Input_Args:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_SuiteId (
-        SET "Function_Error=Missing required argument <SuiteId>"
+    IF NOT DEFINED Input_SuiteId (
+        SET "Input_Error=Missing required argument <SuiteId>"
         GOTO Failure
     )
 
-    IF NOT DEFINED Function_ActionId (
-        SET "Function_Error=Missing action for the %Function_Module% module"
+    IF NOT DEFINED Input_ActionId (
+        SET "Input_Error=Missing action for the %Input_Module% module"
         GOTO Usage
     )
 
-    FOR %%A IN (%Function_Actions%) DO FOR /F "tokens=1,2 delims=:" %%X IN ("%%A") DO IF /I "%%X"=="%Function_ActionId%" SET "Function_Suffix=%%Y"
+    FOR %%A IN (%Input_Actions%) DO FOR /F "tokens=1,2 delims=:" %%X IN ("%%A") DO IF /I "%%X"=="%Input_ActionId%" SET "Input_Suffix=%%Y"
 
-    IF NOT DEFINED Function_Suffix (
-        SET "Function_Error=Unknown %Function_Module% action %Function_ActionId%"
+    IF NOT DEFINED Input_Suffix (
+        SET "Input_Error=Unknown %Input_Module% action %Input_ActionId%"
         GOTO Usage
     )
 
     :: An empty project or arg list is omitted rather than passed as "", so the
     :: leaf sees one of its three documented forms and --args never arrives bare.
-    IF DEFINED Function_ProjectId SET "Function_ProjectArg="%Function_ProjectId%""
-    IF DEFINED Function_Args SET "Function_Tail=%Function_Tail% --args %Function_Args%"
-    IF DEFINED Function_Projects SET "Function_Tail=%Function_Tail% -p %Function_Projects%"
-    IF DEFINED Function_Passthru SET "Function_Tail=%Function_Tail% %Function_Passthru%"
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    IF DEFINED Input_ProjectId SET "Input_ProjectArg="%Input_ProjectId%""
+    IF DEFINED Input_Args SET "Input_Tail=%Input_Tail% --args %Input_Args%"
+    IF DEFINED Input_Projects SET "Input_Tail=%Input_Tail% -p %Input_Projects%"
+    IF DEFINED Input_Passthru SET "Input_Tail=%Input_Tail% %Input_Passthru%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Main
 
 :Usage
-    CALL FnEtcLogError FnGitDispatch "%Function_Error%"
-    SET "Function_Error="
+    CALL FnEtcLogError FnGitDispatch "%Input_Error%"
+    SET "Input_Error="
     ECHO   Usage: ^<SUITE^> git ^<ACTION^> ^<ARGS...^> ^<FLAGS...^>
     ECHO          ^<SUITE^> ^<PROJECT^> git ^<ACTION^> ^<ARGS...^>
     ECHO          ^<SUITE^> git ^<ACTION^> -p ^<PROJECTS...^>
@@ -126,12 +126,12 @@ GOTO Constructor
     GOTO Failure
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
     :: GOTO takes no arguments, so the return code travels in a variable. A
-    :: called function that already logged its own failure leaves Function_Error
+    :: called function that already logged its own failure leaves Input_Error
     :: empty, which is what keeps one fault from being reported at every layer.
-    IF DEFINED Function_Error CALL FnEtcLogError FnGitDispatch "%Function_Error%"
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL FnEtcLogError FnGitDispatch "%Input_Error%"
+    EXIT /B %Input_ReturnCode%

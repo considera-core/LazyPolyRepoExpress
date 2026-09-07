@@ -1,21 +1,15 @@
 :: FnEtcEnvGetDataPath
-:: leprechaun function env DataPath
-:: -- Resolves the Data directory and exports GLOBAL_DataPath.
-:: --
-:: -- Self locating from %~dp0. The Bin forwarders CALL this script at its real
-:: -- path and do not SETLOCAL, so %~dp0 still names this directory across the
-:: -- hop and the export still reaches the original caller.
-:: --
-:: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_DataPath.
+:: -- Output:
+:: --   Output_Env_DataPath                     (string) resolved path to the Data directory
 
 @ECHO OFF
 
 :: <root>\Modules\Internal\Etc\Env\ -> <root>\Data
-FOR %%I IN ("%~dp0..\..\..\..\Data") DO SET "GLOBAL_DataPath=%%~fI"
+FOR %%I IN ("%~dp0..\..\..\..\Data") DO SET "Output_Env_DataPath=%%~fI"
 
-IF NOT EXIST "%GLOBAL_DataPath%" (
-    CALL FnEtcLogError FnEtcEnvGetDataPath "Data directory not found at %GLOBAL_DataPath%"
-    SET "GLOBAL_DataPath="
+IF NOT EXIST "%Output_Env_DataPath%" (
+    CALL FnEtcLogError %~n0 "Data directory not found at %Output_Env_DataPath%"
+    SET "Output_Env_DataPath="
     EXIT /B 1
 )
 

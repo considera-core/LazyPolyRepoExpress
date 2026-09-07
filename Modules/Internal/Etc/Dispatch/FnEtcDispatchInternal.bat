@@ -9,33 +9,33 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    CALL leprechaun function resolve Module "%Function_ModuleId%"
+    CALL leprechaun function resolve Module "%Input_ModuleId%"
     IF ERRORLEVEL 1 GOTO Failure
 
-    CALL leprechaun function resolve Suite "%Function_SuiteId%"
+    CALL leprechaun function resolve Suite "%Input_SuiteId%"
     IF ERRORLEVEL 1 GOTO Failure
 
-    IF DEFINED Function_ProjectId (
-        CALL leprechaun function resolve Project "%Function_SuiteId%" "%Function_ProjectId%"
+    IF DEFINED Input_ProjectId (
+        CALL leprechaun function resolve Project "%Input_SuiteId%" "%Input_ProjectId%"
         IF ERRORLEVEL 1 GOTO Failure
 
-        CALL leprechaun function resolve ProjectModuleDefinition "%Function_SuiteId%" "%Function_ProjectId%" "%Function_ModuleId%"
+        CALL leprechaun function resolve ProjectModuleDefinition "%Input_SuiteId%" "%Input_ProjectId%" "%Input_ModuleId%"
         IF ERRORLEVEL 1 GOTO Failure
     )
 
-    CALL leprechaun function %Function_ModuleId% dispatch "%Function_SuiteId%" "%Function_ProjectArg%" "%Function_ActionId%" %Function_Args%
+    CALL leprechaun function %Input_ModuleId% dispatch "%Input_SuiteId%" "%Input_ProjectArg%" "%Input_ActionId%" %Input_Args%
     IF ERRORLEVEL 1 GOTO Failure
 
     GOTO Destructor
 
 :Constructor
-    SET "Function_SuiteId=%~1"
-    SET "Function_ProjectId=%~2"
-    SET "Function_ModuleId=%~3"
-    SET "Function_ActionId=%~4"
-    SET "Function_Args="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_SuiteId=%~1"
+    SET "Input_ProjectId=%~2"
+    SET "Input_ModuleId=%~3"
+    SET "Input_ActionId=%~4"
+    SET "Input_Args="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
 
     CALL leprechaun function flags %*
 
@@ -49,49 +49,49 @@ GOTO Constructor
 
 :Collect
     IF [%1]==[] GOTO Collected
-    SET "Function_Args=%Function_Args% %1"
+    SET "Input_Args=%Input_Args% %1"
     SHIFT
     GOTO Collect
 
 :Collected
-    IF DEFINED Function_Args SET "Function_Args=%Function_Args:~1%"
+    IF DEFINED Input_Args SET "Input_Args=%Input_Args:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_SuiteId (
-        SET "Function_Error=Missing required argument <SuiteId>"
+    IF NOT DEFINED Input_SuiteId (
+        SET "Input_Error=Missing required argument <SuiteId>"
         GOTO Failure
     )
 
-    IF NOT DEFINED Function_ModuleId (
-        SET "Function_Error=Missing required argument <ModuleId>"
+    IF NOT DEFINED Input_ModuleId (
+        SET "Input_Error=Missing required argument <ModuleId>"
         GOTO Failure
     )
 
-    IF NOT DEFINED Function_ActionId (
-        SET "Function_Error=Missing required argument <ActionId>"
+    IF NOT DEFINED Input_ActionId (
+        SET "Input_Error=Missing required argument <ActionId>"
         GOTO Failure
     )
 
     :: The module dispatcher takes ProjectId as a fixed positional, so an absent
     :: project is passed as an empty string rather than omitted.
-    SET "Function_ProjectArg=%Function_ProjectId%"
+    SET "Input_ProjectArg=%Input_ProjectId%"
     GOTO Main
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
     :: GOTO takes no arguments, so the return code travels in a variable. A
-    :: called function that already logged its own failure leaves Function_Error
+    :: called function that already logged its own failure leaves Input_Error
     :: empty, which is what keeps one fault from being reported at every layer.
-    IF DEFINED Function_Error CALL leprechaun function log error FnEtcDispatchInternal "%Function_Error%"
-    SET "Function_SuiteId="
-    SET "Function_ProjectId="
-    SET "Function_ModuleId="
-    SET "Function_ActionId="
-    SET "Function_ProjectArg="
-    SET "Function_Args="
-    SET "Function_Error="
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL leprechaun function log error FnEtcDispatchInternal "%Input_Error%"
+    SET "Input_SuiteId="
+    SET "Input_ProjectId="
+    SET "Input_ModuleId="
+    SET "Input_ActionId="
+    SET "Input_ProjectArg="
+    SET "Input_Args="
+    SET "Input_Error="
+    EXIT /B %Input_ReturnCode%

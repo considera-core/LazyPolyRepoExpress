@@ -1,53 +1,57 @@
-:: FnEtcResolveSuiteApp <SuiteId> <AppId> <Flags...>
-:: -- Resolves a suite project app from the data store, and exports:
-:: --   GLOBAL_ResolvedSuiteAppId             (AppCommandIdentifier) command identifier
-:: --   GLOBAL_ResolvedSuiteAppLabel          (AppFriendlyName) friendly name
-:: --   GLOBAL_ResolvedSuiteAppDescription    (AppFriendlyDescription) friendly description
-:: --   GLOBAL_ResolvedSuiteAppProjectId      (FK) owning suite project command identifier
-:: -- Flags:
-:: --   --refresh: forces a reload of the project app data, even if it was already loaded in this scope
-:: --   --org: resolves the project suite's organization and exports:
-:: --     GLOBAL_ResolvedProjectAppOrgId        (FK) owning organization command identifier
-:: --     GLOBAL_ResolvedProjectAppSuiteId      (FK) owning suite command identifier
+:: FnEtcResolveSuiteApp <OrgId> <SuiteId> <AppId>
+:: -- Outputs:
+:: --   Output_Resolved_SuiteAppId             (AppCommandIdentifier) command identifier
+:: --   Output_Resolved_SuiteAppLabel          (AppFriendlyName) friendly name
+:: --   Output_Resolved_SuiteAppDescription    (AppFriendlyDescription) friendly description
+:: --   Output_Resolved_SuiteAppSuiteId      (FK) owning suite project command identifier
 
 @ECHO OFF
 
-SET "Function_SuiteId=%~1"
-SET "Function_AppId=%~2"
-SET "Function_Index=0"
+:: INPUT
+SET "Input_OrgId=%~1"
+SET "Input_SuiteId=%~2"
+SET "Input_AppId=%~3"
 
-IF NOT DEFINED Function_SuiteId (
-    CALL FnEtcLogError "FnEtcResolveSuiteApp" "Missing required argument ^<SuiteId^>"
-    EXIT /B 1
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument <OrgId>" & EXIT /B 1
+IF NOT DEFINED Input_SuiteId CALL FnEtcLogError %~n0 "Missing required argument <SuiteId>" & EXIT /B 1
+IF NOT DEFINED Input_AppId CALL FnEtcLogError %~n0 "Missing required argument <AppId>" & EXIT /B 1
+
+:: CACHE
+CALL FnEtcCacheGet "SuiteAppId[%Input_OrgId%][%Input_SuiteId%][%Input_AppId%]" || CALL FnEtcDataSuiteApps %Input_OrgId% %Input_SuiteId%
+CALL FnEtcCacheGet "SuiteAppLabel[%Input_OrgId%][%Input_SuiteId%][%Input_AppId%]" || CALL FnEtcDataSuiteApps %Input_OrgId% %Input_SuiteId%
+CALL FnEtcCacheGet "SuiteAppDescription[%Input_OrgId%][%Input_SuiteId%][%Input_AppId%]" || CALL FnEtcDataSuiteApps %Input_OrgId% %Input_SuiteId%
+CALL FnEtcCacheGet "SuiteAppSuiteId[%Input_OrgId%][%Input_SuiteId%][%Input_AppId%]" || CALL FnEtcDataSuiteApps %Input_OrgId% %Input_SuiteId%
+
+IF DEFINED Output_Cache_SuiteAppId IF DEFINED Output_Cache_SuiteAppLabel IF DEFINED Output_Cache_SuiteAppDescription IF DEFINED Output_Cache_SuiteAppSuiteId (
+    SET "Output_Resolved_SuiteAppId=%Output_Cache_SuiteAppId%"
+    SET "Output_Resolved_SuiteAppLabel=%Output_Cache_SuiteAppLabel%"
+    SET "Output_Resolved_SuiteAppDescription=%Output_Cache_SuiteAppDescription%"
+    SET "Output_Resolved_SuiteAppSuiteId=%Output_Cache_SuiteAppSuiteId%"
+    EXIT /B 0
 )
 
-IF NOT DEFINED Function_AppId (
-    CALL FnEtcLogError "FnEtcResolveSuiteApp" "Missing required argument ^<AppId^>"
-    EXIT /B 1
-)
-
-IF /I "%GLOBAL_ResolvedSuiteAppId%"=="%Function_AppId%" (
-    CALL FnEtcFlags %*
-    IF NOT DEFINED GLOBAL_FlagRefresh EXIT /B 0
-)
-
-SET "GLOBAL_ResolvedSuiteAppId="
-CALL FnEtcDataSuiteApps "%Function_SuiteId%"
-IF ERRORLEVEL 1 EXIT /B 1
-
-FOR %%A IN (%GLOBAL_DataProjectApps%) DO (
-    IF DEFINED GLOBAL_ResolvedSuiteAppId EXIT /B 0
-
-    IF /I "%%A"=="%Function_AppId%" (
-        SET "GLOBAL_ResolvedSuiteAppId=%Function_AppId%"
-        CALL SET "GLOBAL_ResolvedSuiteAppLabel=%%GLOBAL_PROJECTAPP_%Function_AppId%_NAME%%"
-        CALL SET "GLOBAL_ResolvedSuiteAppDescription=%%GLOBAL_PROJECTAPP_%Function_AppId%_DESCRIPTION%%"
-        CALL SET "GLOBAL_ResolvedSuiteAppProjectId=%%GLOBAL_PROJECTAPP_%Function_AppId%_PROJECTID%%"
-        EXIT /B 0
+:: MAPPING
+SETLOCAL EnableDelayedExpansion
+SET "Local_Index=0"
+FOR %%A IN (%Output_Data_SuiteApps%) DO (
+    IF NOT DEFINED Output_Resolved_SuiteAppId (
+        IF /I NOT "%Input_AppId%"=="%%A" (
+            SET /A Local_Index+=1
+        ) ELSE (
+            CALL SET "Local_SuiteAppId=%Input_AppId%"
+            CALL SET "Local_SuiteAppLabel=!Output_Data_SuiteApp%Local_Index%Label!"
+            CALL SET "Local_SuiteAppDescription=!Output_Data_SuiteApp%Local_Index%Description!"
+            CALL SET "Local_SuiteAppSuiteId=%Input_SuiteId%"
+        )
     )
-
-    SET /A Function_Index+=1
 )
 
-SET "Function_Index="
+ENDLOCAL ^
+    & SET "Output_Resolved_SuiteAppId=%Local_SuiteAppId%" ^
+    & SET "Output_Resolved_SuiteAppLabel=%Local_SuiteAppLabel%" ^
+    & SET "Output_Resolved_SuiteAppDescription=%Local_SuiteAppDescription%" ^
+    & SET "Output_Resolved_SuiteAppSuiteId=%Local_SuiteAppSuiteId%"
+
+IF NOT DEFINED Output_Resolved_SuiteAppId CALL FnEtcLogWarning %~n0 "Failed to resolve suite app with AppId: %Input_AppId%" & EXIT /B 1
+
 EXIT /B 0

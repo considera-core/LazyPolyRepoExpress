@@ -1,37 +1,37 @@
 
-SET "Function_FrameworkId=%GLOBAL_FlagArg1%"
+SET "Input_FrameworkId=%GLOBAL_FlagArg1%"
 
-IF /I "%Function_FrameworkId%"=="dotnet" (
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
+IF /I "%Input_FrameworkId%"=="dotnet" (
+    PUSHD "%Output_Resolved_ProjectRootPath%"
     CALL dotnet watch 
     POPD
     IF ERRORLEVEL 1 GOTO Failure
 )
-ELSE IF /I "%Function_FrameworkId%"=="ng" (
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
-    CALL ng serve:%GLOBAL_ResolvedProjectId%
+ELSE IF /I "%Input_FrameworkId%"=="ng" (
+    PUSHD "%Output_Resolved_ProjectRootPath%"
+    CALL ng serve:%Output_Resolved_ProjectId%
     POPD
     IF ERRORLEVEL 1 GOTO Failure
 )
-ELSE IF /I "%Function_FrameworkId%"=="caddy" (
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
+ELSE IF /I "%Input_FrameworkId%"=="caddy" (
+    PUSHD "%Output_Resolved_ProjectRootPath%"
     CALL caddy run Caddyfile
     POPD
     IF ERRORLEVEL 1 GOTO Failure
 )
-ELSE IF /I "%Function_FrameworkId%"=="terraform" (
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
+ELSE IF /I "%Input_FrameworkId%"=="terraform" (
+    PUSHD "%Output_Resolved_ProjectRootPath%"
     CALL terraform apply
     POPD
     IF ERRORLEVEL 1 GOTO Failure
 )
-ELSE IF /I "%Function_FrameworkId%"=="unity" (
-    PUSHD "%GLOBAL_ResolvedProjectRootPath%"
-    CALL Unity.exe -projectPath "%GLOBAL_ResolvedProjectRootPath%" -executeMethod BuildScript.Build
+ELSE IF /I "%Input_FrameworkId%"=="unity" (
+    PUSHD "%Output_Resolved_ProjectRootPath%"
+    CALL Unity.exe -projectPath "%Output_Resolved_ProjectRootPath%" -executeMethod BuildScript.Build
     POPD
     IF ERRORLEVEL 1 GOTO Failure
 )
 ELSE (
-    SET "Function_Error=Unsupported framework %Function_FrameworkId%"
+    SET "Input_Error=Unsupported framework %Input_FrameworkId%"
     GOTO Failure
 )

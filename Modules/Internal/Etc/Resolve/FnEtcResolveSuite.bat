@@ -1,100 +1,69 @@
-:: FnEtcResolveSuite <SuiteId> <Flag[]>
-:: leprechaun function resolve Suite <SuiteId> <Flag[]>
-:: -- Resolves a suite from the data store, and exports:
-:: --   GLOBAL_ResolvedSuiteId              (SuiteCommandIdentifier) command identifier
-:: --   GLOBAL_ResolvedSuiteIdentifier      (SuiteFriendlyIdentifier) directory name
-:: --   GLOBAL_ResolvedSuiteName            (SuiteFriendlyName) friendly name
-:: --   GLOBAL_ResolvedSuiteRootPath        (SuiteRootPath) absolute path to the suite root
-:: --   GLOBAL_ResolvedSuiteActive          (SuiteIsActive) true or false
-:: --   GLOBAL_ResolvedSuiteDataPath        (Computed) absolute path to this suite's data directory
-:: --   GLOBAL_ResolvedSuiteOrgId           (FK) owning organization command identifier
-:: -- Flags:
-:: --   --refresh: resolve again even when this suite is already in scope
-:: --
-:: -- A suite is named without its organization, so finding one means scanning
-:: -- each organization's Suites.csv in turn. The Docs.md schema group enforces
-:: -- that suite identifiers are unique across organizations, which is what makes
-:: -- the first match the only match.
-:: --
-:: -- NOTE: Locals are Export_ rather than Function_ on purpose. With no
-:: --       SETLOCAL, a Function_ name here would be the CALLER's variable,
-:: --       and clearing one on the way out would blank it under them.
-:: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_ResolvedSuite values.
+:: FnEtcResolveSuite <OrgId> <SuiteId>
+:: -- Output:
+:: --   Output_Resolved_SuiteId              (SuiteCommandIdentifier) command identifier
+:: --   Output_Resolved_SuiteIdentifier      (SuiteFriendlyIdentifier) directory name
+:: --   Output_Resolved_SuiteName            (SuiteFriendlyName) friendly name
+:: --   Output_Resolved_SuiteRootPath        (SuiteRootPath) absolute path to the suite root
+:: --   Output_Resolved_SuiteActive          (SuiteIsActive) true or false
+:: --   Output_Resolved_SuiteOrgId           (FK) owning organization command identifier
+:: -- Dependencies:
+:: --   FnEtcDataSuites
+:: --     FnEtcResolveOrganization
+:: -- Actions (Optional):
+:: --   refresh: resolve again even when this suite is already in scope
 
 @ECHO OFF
 
-SET "Export_SuiteId=%~1"
+:: INPUT
+SET "Input_OrgId=%~1"
+SET "Input_SuiteId=%~2"
 
-IF NOT DEFINED Export_SuiteId (
-    CALL FnEtcLogError FnEtcResolveSuite "Missing required argument <SuiteId>"
-    EXIT /B 1
-)
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument <OrgId>" & EXIT /B 1
+IF NOT DEFINED Input_SuiteId CALL FnEtcLogError %~n0 "Missing required argument <SuiteId>" & EXIT /B 1
 
-CALL FnEtcFlags %*
+:: CACHE
+CALL FnEtcCacheGet SuiteId "[%Input_OrgId%][%Input_SuiteId%]" || CALL FnEtcDataSuites %Input_OrgId%
+CALL FnEtcCacheGet SuiteIdentifier "[%Input_OrgId%][%Input_SuiteId%]" || CALL FnEtcDataSuites %Input_OrgId%
+CALL FnEtcCacheGet SuiteName "[%Input_OrgId%][%Input_SuiteId%]" || CALL FnEtcDataSuites %Input_OrgId%
+CALL FnEtcCacheGet SuiteRootPath "[%Input_OrgId%][%Input_SuiteId%]" || CALL FnEtcDataSuites %Input_OrgId%
+CALL FnEtcCacheGet SuiteActive "[%Input_OrgId%][%Input_SuiteId%]" || CALL FnEtcDataSuites %Input_OrgId%
 
-IF /I "%GLOBAL_ResolvedSuiteId%"=="%Export_SuiteId%" IF NOT DEFINED GLOBAL_FlagRefresh (
-    SET "Export_SuiteId="
+IF DEFINED Output_Cache_SuiteId IF DEFINED Output_Cache_SuiteIdentifier IF DEFINED Output_Cache_SuiteName IF DEFINED Output_Cache_SuiteRootPath IF DEFINED Output_Cache_SuiteActive (
+    SET "Output_Resolved_SuiteId=%Output_Cache_SuiteId%"
+    SET "Output_Resolved_SuiteIdentifier=%Output_Cache_SuiteIdentifier%"
+    SET "Output_Resolved_SuiteName=%Output_Cache_SuiteName%"
+    SET "Output_Resolved_SuiteRootPath=%Output_Cache_SuiteRootPath%"
+    SET "Output_Resolved_SuiteActive=%Output_Cache_SuiteActive%"
+    SET "Output_Resolved_SuiteOrgId=%Output_Resolved_OrgId%"
     EXIT /B 0
 )
 
-SET "GLOBAL_ResolvedSuiteId="
-SET "GLOBAL_ResolvedSuiteIdentifier="
-SET "GLOBAL_ResolvedSuiteName="
-SET "GLOBAL_ResolvedSuiteRootPath="
-SET "GLOBAL_ResolvedSuiteActive="
-SET "GLOBAL_ResolvedSuiteDataPath="
-SET "GLOBAL_ResolvedSuiteOrgId="
-
-CALL FnEtcEnvGetDataPath
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcDataOrganizations
-IF ERRORLEVEL 1 EXIT /B 1
-
-SET "Local_SuiteOrgs=%GLOBAL_DataOrgs%"
-FOR %%O IN (%Local_SuiteOrgs%) DO CALL :Org "%%O"
-
-IF NOT DEFINED GLOBAL_ResolvedSuiteId (
-    CALL FnEtcLogError FnEtcResolveSuite "Unknown suite %Export_SuiteId%"
-    SET "Export_SuiteId="
-    SET "Local_SuiteOrgs="
-    SET "Local_SuiteIndex="
-    EXIT /B 1
+:: MAPPING
+SETLOCAL EnableDelayedExpansion
+SET "Local_Index=0"
+FOR %%S IN (%Output_Data_Suites%) DO (
+    IF NOT DEFINED Output_Resolved_SuiteId (
+        IF /I NOT "%Input_SuiteId%"=="%%S" (
+            SET /A Local_Index+=1
+        ) ELSE (
+            CALL SET "Local_SuiteId=%%S"
+            CALL SET "Local_SuiteIdentifier=!Output_Data_Suite%Local_Index%Identifier!"
+            CALL SET "Local_SuiteName=!Output_Data_Suite%Local_Index%Name!"
+            CALL SET "Local_SuiteRootPath=!Output_Data_Suite%Local_Index%RootPath!"
+            CALL SET "Local_SuiteActive=!Output_Data_Suite%Local_Index%Active!"
+            CALL SET "Local_SuiteOrgId=%Output_Resolved_OrgId%"
+        )
+    )
 )
 
-SET "Export_SuiteId="
-SET "Local_SuiteOrgs="
-SET "Local_SuiteIndex="
+ENDLOCAL ^
+    & SET "Output_Resolved_SuiteId=%Local_SuiteId%" ^
+    & SET "Output_Resolved_SuiteIdentifier=%Local_SuiteIdentifier%" ^
+    & SET "Output_Resolved_SuiteName=%Local_SuiteName%" ^
+    & SET "Output_Resolved_SuiteRootPath=%Local_SuiteRootPath%" ^
+    & SET "Output_Resolved_SuiteActive=%Local_SuiteActive%" ^
+    & SET "Output_Resolved_SuiteOrgId=%Local_SuiteOrgId%"
+
+IF NOT DEFINED Output_Resolved_SuiteId CALL FnEtcLogError %~n0 "Unknown suite %Input_SuiteId%" & EXIT /B 1
+
 EXIT /B 0
-
-:Org
-    IF DEFINED GLOBAL_ResolvedSuiteId EXIT /B 0
-
-    :: Each org's read clobbers GLOBAL_DataSuite*, so the match has to be taken
-    :: before moving on to the next organization.
-    CALL FnEtcDataSuites "%~1"
-    IF ERRORLEVEL 1 EXIT /B 0
-
-    SET "Local_SuiteIndex=0"
-    FOR %%S IN (%GLOBAL_DataSuites%) DO CALL :Row "%~1" "%%S"
-    EXIT /B 0
-
-:Row
-    IF DEFINED GLOBAL_ResolvedSuiteId EXIT /B 0
-    IF /I NOT "%~2"=="%Export_SuiteId%" GOTO RowNext
-
-    CALL SET "GLOBAL_ResolvedSuiteIdentifier=%%GLOBAL_DataSuite%Local_SuiteIndex%Identifier%%"
-    CALL SET "GLOBAL_ResolvedSuiteName=%%GLOBAL_DataSuite%Local_SuiteIndex%Name%%"
-    CALL SET "GLOBAL_ResolvedSuiteRootPath=%%GLOBAL_DataSuite%Local_SuiteIndex%RootPath%%"
-    CALL SET "GLOBAL_ResolvedSuiteActive=%%GLOBAL_DataSuite%Local_SuiteIndex%Active%%"
-    SET "GLOBAL_ResolvedSuiteOrgId=%~1"
-    SET "GLOBAL_ResolvedSuiteId=%Export_SuiteId%"
-
-    :: FnEtcDataSuites resolved this organization on the way in, so the org
-    :: directory name is already in scope.
-    SET "GLOBAL_ResolvedSuiteDataPath=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedOrgIdentifier%\Suites\%GLOBAL_ResolvedSuiteIdentifier%"
-    EXIT /B 0
-
-:RowNext
-    SET /A Local_SuiteIndex+=1
-    EXIT /B 0

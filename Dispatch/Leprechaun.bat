@@ -28,9 +28,9 @@ IF /I "%Input_Command%"=="exec" (
     SET "Input_Args="
     SET "Input_Flags="
 
-    :: CALL FnEtcFlags2 -p "!Input_Org!" "!Input_Suite!" "!Input_Module!" "!Input_Action!" -a %*
+    :: CALL FnEtcFlags -p "!Input_Org!" "!Input_Suite!" "!Input_Module!" "!Input_Action!" -a %*
     :: CALL FnEtcDispatch2 global "!Input_Org!" "!Input_Suite!" "!Input_Module!" "!Input_Action!" !Output_FnEtcFlags_Args! !Output_FnEtcFlags_Flags!
-    CALL FnEtcFlags2 -p -a %*
+    CALL FnEtcFlags -p -a %*
     CALL FnEtcDispatch2 global !Output_FnEtcFlags_Args! !Output_FnEtcFlags_Flags!
 ) ELSE IF /I "%Input_Command%"=="function" (
     SET "Input_Submodule=%~2"
@@ -38,7 +38,7 @@ IF /I "%Input_Command%"=="exec" (
     SET "Input_Args="
     SET "Input_Flags="
 
-    CALL FnEtcFlags2 -p "!Input_Submodule!" "!Input_Action!" -a %*
+    CALL FnEtcFlags -p function "!Input_Submodule!" "!Input_Action!" -a %*
     CALL "FnEtc!Input_Submodule!!Input_Action!" !Output_FnEtcFlags_Args! !Output_FnEtcFlags_Flags!
 ) ELSE IF /I "%Input_Command%"=="edit" (
     CALL CODE "C:\Envrionments\Dev\ConsideraDev\SoftwareDev\Sources\LazyPolyRepoExpress\"

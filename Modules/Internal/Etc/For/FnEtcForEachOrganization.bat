@@ -11,50 +11,50 @@ GOTO Constructor
     CALL FnEtcDataOrganizations
     IF ERRORLEVEL 1 GOTO Failure
 
-    IF NOT DEFINED GLOBAL_DataOrgs (
-        SET "Function_Error=No organizations are defined"
+    IF NOT DEFINED Output_Data_Orgs (
+        SET "Input_Error=No organizations are defined"
         GOTO Failure
     )
 
-    FOR %%O IN (%GLOBAL_DataOrgs%) DO (
-        CALL %Function_FunctionName% "%%O" %Function_Tail%
-        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    FOR %%O IN (%Output_Data_Orgs%) DO (
+        CALL %Input_FunctionName% "%%O" %Input_Tail%
+        IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     )
 
     GOTO Destructor
 
 :Constructor
-    SET "Function_FunctionName=%~1"
-    SET "Function_Tail="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_FunctionName=%~1"
+    SET "Input_Tail="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
     SHIFT
     GOTO Collect
 
 :Collect
     IF [%1]==[] GOTO Collected
-    SET "Function_Tail=%Function_Tail% %1"
+    SET "Input_Tail=%Input_Tail% %1"
     SHIFT
     GOTO Collect
 
 :Collected
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_FunctionName (
-        SET "Function_Error=Missing required argument <FunctionName>"
+    IF NOT DEFINED Input_FunctionName (
+        SET "Input_Error=Missing required argument <FunctionName>"
         GOTO Failure
     )
     GOTO Main
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
-    IF DEFINED Function_Error CALL FnEtcLogError FnEtcForEachOrganization "%Function_Error%"
-    SET "Function_FunctionName="
-    SET "Function_Tail="
-    SET "Function_Error="
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL FnEtcLogError FnEtcForEachOrganization "%Input_Error%"
+    SET "Input_FunctionName="
+    SET "Input_Tail="
+    SET "Input_Error="
+    EXIT /B %Input_ReturnCode%

@@ -1,0 +1,9 @@
+PS C:\Users\Considera Core LLC> considera consideraweb git story ZC-CWEB-1234 -p bff api
+LeprechaunCLI:FnEtcRouter[D]: SET Input_OrgId: considera
+LeprechaunCLI:FnEtcRouter[D]: SET Input_SuiteId: consideraweb
+LeprechaunCLI:FnEtcRouter[D]: FnEtcResolveSuite Success
+LeprechaunCLI:FnEtcRouter[D]: SET Input_Module: git
+LeprechaunCLI:FnEtcRouter[D]: SET Input_Action: story
+LeprechaunCLI:FnEtcRouter[D]: SET Input_Arg: ZC-CWEB-1234
+LeprechaunCLI:FnEtcRouter[D]: FnEtcFlags Called
+LeprechaunCLI:FnEtcFlags[I]: Outputted Args: -p bff api

@@ -1,167 +1,116 @@
-:: FnEtcFlags <Arg[]>
-:: leprechaun function flags <Arg[]>
-:: -- Converts a leprechaun command line into flag variables in the CALLER's scope.
+:: FnEtcFlags -p <KnownParameter[]> -a <Arg[]>
+:: -- Will extract all flags and arguments excluding the known parameters, and return them in the caller's scope.
 :: --
-:: -- Flag classes:
-:: --   LIST    (LPRE_LIST_FLAGS)  consume tokens until the next -flag or end of line
-:: --     -p api bff   -> GLOBAL_FlagProjects=api bff  GLOBAL_FlagProjectsCount=2
-:: --                     GLOBAL_FlagProjects1=api     GLOBAL_FlagProjects2=bff
-:: --   VALUE   (LPRE_VALUE_FLAGS) consume exactly the next token
-:: --     --org considera -> GLOBAL_FlagOrg=considera
-:: --   BOOLEAN (everything else) set to 1 and appended to GLOBAL_FlagPassthru
-:: --     -v -d        -> GLOBAL_FlagVerbose=1 GLOBAL_FlagDryRun=1
-:: --
-:: -- Positional args:
-:: --   GLOBAL_FlagArgc     -> count of positional args
-:: --   GLOBAL_FlagArg1..N  -> each positional arg
-:: --
-:: -- Two namespaces are written for every flag. GLOBAL_Flag<Name> is the one the
-:: -- dispatch chain reads; FLAG_<NAME> is kept for the external dispatcher, which
-:: -- still reads the older names. Batch variable names are case insensitive and
-:: -- the GLOBAL_ form drops separators, so --dry-run sets GLOBAL_Flagdryrun and a
-:: -- caller may read it as GLOBAL_FlagDryRun.
-:: --
-:: -- NOTE: This script deliberately does NOT call SETLOCAL. cmd.exe runs an
-:: --       implicit ENDLOCAL when a batch file returns, which would discard
-:: --       every flag variable this script exists to produce. Callers are
-:: --       expected to SETLOCAL themselves so the flags stay scoped to them.
-:: -- NOTE: Callers should NOT enable delayed expansion, or "!" inside an
-:: --       argument value is eaten before this script ever sees the value.
+:: -- -p declares the parameters that take a value. An entry is either "short" or
+:: --    "short:long", and every flag is keyed by its SHORT name, so -o and --org
+:: --    both land in Output_FnEtcFlags_Flag_o:
+:: --      CALL FnEtcFlags -p o:org s:suite p:project -a %*
+:: -- -a is the line to parse, and must come last. Every token after it is data,
+:: --    so an argument is free to be "-a" or "-p" itself.
+:: -- Output:
+:: --   Output_FnEtcFlags_Args          (Arg[]) space separated arguments
+
+
+:: EX: FnEtcFlags -p considera consideraweb -a considera consideraweb git branch -V
 
 @ECHO OFF
+SETLOCAL EnableExtensions EnableDelayedExpansion
 
-IF NOT DEFINED LPRE_LIST_FLAGS SET "LPRE_LIST_FLAGS=projects args"
-IF NOT DEFINED LPRE_VALUE_FLAGS SET "LPRE_VALUE_FLAGS=org suite project module action entry env fn id org_id suite_id"
-IF NOT DEFINED LPRE_FLAG_ALIASES SET "LPRE_FLAG_ALIASES=p:projects a:args o:org s:suite m:module e:entry v:verbose d:dry_run i:id r:refresh"
+FOR /F "delims==" %%V IN ('SET Output_FnEtcFlags_ 2^>NUL') DO SET "%%V="
+CALL FnEtcLogDebug %~n0 "@SET Output_FnEtcFlags_* NULL"
 
-:: Clear both namespaces left over from any previous call in this scope.
-FOR /F "delims==" %%V IN ('SET FLAG_ 2^>NUL') DO SET "%%V="
-FOR /F "delims==" %%V IN ('SET GLOBAL_Flag 2^>NUL') DO SET "%%V="
-SET "FLAG_ARGC=0"
-SET "FLAG_PASSTHRU="
-SET "GLOBAL_FlagArgc=0"
-SET "GLOBAL_FlagPassthru="
+SET "Local_Mode="
+SET "Local_KnownParameters="
+SET "Local_AllArgs="
+SET "Local_Args="
+SET "Local_Error="
 
-:PARSE
-    :: [%1] rather than "%~1": a literal "" argument must not read as end-of-args,
-    :: and it keeps its quotes under %1, so [""] is correctly not equal to [].
-    IF [%1]==[] GOTO :PARSE_DONE
+CALL FnEtcLogDebug %~n0 "SET Local_Mode: !Local_Mode!"
+CALL FnEtcLogDebug %~n0 "SET Local_KnownParameters: !Local_KnownParameters!"
+CALL FnEtcLogDebug %~n0 "SET Local_AllArgs: !Local_AllArgs!"
+CALL FnEtcLogDebug %~n0 "SET Local_Args: !Local_Args!"
+CALL FnEtcLogDebug %~n0 "SET Local_Error: !Local_Error!"
+CALL FnEtcLogDebug %~n0 "LOOP START"
 
-    SET "LPRE_TOKEN=%~1"
-    IF NOT DEFINED LPRE_TOKEN GOTO :PARSE_POSITIONAL
-    IF "%LPRE_TOKEN:~0,2%"=="--" GOTO :PARSE_LONG
-    IF "%LPRE_TOKEN:~0,1%"=="-" GOTO :PARSE_SHORT
-    GOTO :PARSE_POSITIONAL
+FOR %%T IN (%*) DO (
+    SET "Local_Token=%%~T"
+    CALL FnEtcLogDebug %~n0 "- SET Local_Token: !Local_Token!"
+    
+    IF NOT DEFINED Local_Mode (
+        IF /I "!Local_Token!"=="-p" SET "Local_Mode=KnownParameters"
+        IF /I "!Local_Token!"=="-a" SET "Local_Mode=AllArgs"
+        CALL FnEtcLogDebug %~n0 "-- [UNDEFINED] SET Local_Mode: !Local_Mode!"
+    ) ELSE IF "!Local_Mode!"=="KnownParameters" (
+        CALL FnEtcLogDebug %~n0 "-- [KNOWN]"
 
-:PARSE_LONG
-    SET "LPRE_KEY=%LPRE_TOKEN:~2%"
-    GOTO :PARSE_FLAG
+        IF /I "!Local_Token!"=="-a" (
+            SET "Local_Mode=AllArgs"
+            CALL FnEtcLogDebug %~n0 "--- [KNOWN] SET Local_Mode: AllArgs"
+        ) ELSE (
+            SET "Local_KnownParameters=!Local_KnownParameters! %%T"
+            CALL FnEtcLogDebug %~n0 "--- [KNOWN] SET Local_KnownParameters: !Local_KnownParameters!"
+        )
+    ) ELSE (
+        CALL FnEtcLogDebug %~n0 "-- [ARG]"
 
-:PARSE_SHORT
-    SET "LPRE_KEY=%LPRE_TOKEN:~1%"
-    GOTO :PARSE_FLAG
+        SET "Local_AllArgs=!Local_AllArgs! %%T"
+        CALL FnEtcLogDebug %~n0 "--- [ARG] SET Local_AllArgs: !Local_AllArgs!"
+    )
+)
 
-:PARSE_FLAG
-    :: A bare "-" or "--" is not a flag.
-    IF NOT DEFINED LPRE_KEY GOTO :PARSE_POSITIONAL
-    SET "LPRE_KEY=%LPRE_KEY:-=_%"
-    CALL :CANONICALIZE "%LPRE_KEY%"
-    SET "LPRE_KEY=%LPRE_CANON%"
-    :: GLOBAL_Flag names carry no separators, so --dry-run and DryRun agree.
-    SET "LPRE_GKEY=%LPRE_KEY:_=%"
+CALL FnEtcLogDebug %~n0 "- LOOP RES START"
+CALL FnEtcLogDebug %~n0 "-- SET Local_Mode: !Local_Mode!"
+CALL FnEtcLogDebug %~n0 "-- SET Local_KnownParameters: !Local_KnownParameters!"
+CALL FnEtcLogDebug %~n0 "-- SET Local_AllArgs: !Local_AllArgs!"
+CALL FnEtcLogDebug %~n0 "-- SET Local_Args: !Local_Args!"
+CALL FnEtcLogDebug %~n0 "-- SET Local_Error: !Local_Error!"
+CALL FnEtcLogDebug %~n0 "- LOOP RES END"
+CALL FnEtcLogDebug %~n0 "LOOP END"
 
-    CALL :IS_LISTED "%LPRE_KEY%" "%LPRE_LIST_FLAGS%"
-    IF NOT ERRORLEVEL 1 GOTO :PARSE_LIST
+IF NOT "!Local_Mode!"=="AllArgs" SET "Local_Error=Missing required argument -a <Arg[]>"
+CALL FnEtcLogDebug %~n0 "SET Local_Error: !Local_Error!"
 
-    CALL :IS_LISTED "%LPRE_KEY%" "%LPRE_VALUE_FLAGS%"
-    IF NOT ERRORLEVEL 1 GOTO :PARSE_VALUE
 
-    SET "FLAG_%LPRE_KEY%=1"
-    SET "GLOBAL_Flag%LPRE_GKEY%=1"
-    SET "FLAG_PASSTHRU=%FLAG_PASSTHRU% %LPRE_TOKEN%"
-    SET "GLOBAL_FlagPassthru=%GLOBAL_FlagPassthru% %LPRE_TOKEN%"
-    SHIFT
-    GOTO :PARSE
+:: Local_Args becomes the list of arguments that are not known parameters
+:: (basically remove known parameters from Local_AllArgs).
+:: -- Matching is a whole token, not a substring, so removing "considera" no longer
+:: --   eats the "considera" inside "consideraweb".
+:: -- Each known parameter is consumed at most once, so an argument that repeats an
+:: --   already consumed value (git commit -m considera) survives.
+SET "Local_KnownCount=0"
+FOR %%K IN (!Local_KnownParameters!) DO (
+    SET "Local_KnownToken=%%~K"
+    IF DEFINED Local_KnownToken (
+        SET /A Local_KnownCount+=1
+        SET "Local_Known_!Local_KnownCount!=%%~K"
+        SET "Local_KnownUsed_!Local_KnownCount!="
+    )
+)
 
-:PARSE_VALUE
-    SHIFT
-    IF [%1]==[] GOTO :MISSING_VALUE
-    SET "FLAG_%LPRE_KEY%=%~1"
-    SET "GLOBAL_Flag%LPRE_GKEY%=%~1"
-    SHIFT
-    GOTO :PARSE
+SET "Local_Args="
+FOR %%T IN (!Local_AllArgs!) DO (
+    SET "Local_Token=%%~T"
+    SET "Local_Match="
+    FOR /L %%I IN (1,1,!Local_KnownCount!) DO (
+        IF NOT DEFINED Local_Match IF NOT DEFINED Local_KnownUsed_%%I IF /I "!Local_Known_%%I!"=="!Local_Token!" (
+            SET "Local_KnownUsed_%%I=1"
+            SET "Local_Match=1"
+        )
+    )
+    IF NOT DEFINED Local_Match SET "Local_Args=!Local_Args! %%T"
+)
 
-:PARSE_LIST
-    SET "LPRE_LIST_KEY=%LPRE_KEY%"
-    SET "LPRE_LIST_GKEY=%LPRE_GKEY%"
-    SET "LPRE_LIST_VALUE="
-    SET "LPRE_LIST_N=0"
+:: Drop the separator the accumulator was built with, so Args starts on a token.
+IF DEFINED Local_Args SET "Local_Args=!Local_Args:~1!"
 
-:PARSE_LIST_LOOP
-    SHIFT
-    IF [%1]==[] GOTO :PARSE_LIST_STORE
-    SET "LPRE_PEEK=%~1"
-    IF NOT DEFINED LPRE_PEEK GOTO :PARSE_LIST_STORE
-    :: A list stops at the next flag, so "-p api bff -v" gives exactly two projects.
-    IF "%LPRE_PEEK:~0,1%"=="-" GOTO :PARSE_LIST_STORE
-    SET /A LPRE_LIST_N+=1
-    SET "FLAG_%LPRE_LIST_KEY%_%LPRE_LIST_N%=%~1"
-    SET "GLOBAL_Flag%LPRE_LIST_GKEY%%LPRE_LIST_N%=%~1"
-    SET "LPRE_LIST_VALUE=%LPRE_LIST_VALUE% %~1"
-    GOTO :PARSE_LIST_LOOP
 
-:PARSE_LIST_STORE
-    IF "%LPRE_LIST_N%"=="0" GOTO :MISSING_LIST_VALUE
-    :: Drop the leading separator space so the joined form iterates cleanly.
-    SET "LPRE_LIST_VALUE=%LPRE_LIST_VALUE:~1%"
-    SET "FLAG_%LPRE_LIST_KEY%=%LPRE_LIST_VALUE%"
-    SET "FLAG_%LPRE_LIST_KEY%_COUNT=%LPRE_LIST_N%"
-    SET "GLOBAL_Flag%LPRE_LIST_GKEY%=%LPRE_LIST_VALUE%"
-    SET "GLOBAL_Flag%LPRE_LIST_GKEY%Count=%LPRE_LIST_N%"
-    GOTO :PARSE
+:: One line, because the values are read out of the inner scope while the line is
+:: parsed and written to the outer one once ENDLOCAL has run.
+ENDLOCAL & SET "Output_FnEtcFlags_Args=%Local_Args%" & SET "Output_FnEtcFlags_Error=%Local_Error%"
 
-:PARSE_POSITIONAL
-    SET /A FLAG_ARGC+=1
-    SET /A GLOBAL_FlagArgc+=1
-    SET "FLAG_ARG_%FLAG_ARGC%=%~1"
-    SET "GLOBAL_FlagArg%GLOBAL_FlagArgc%=%~1"
-    SHIFT
-    GOTO :PARSE
+IF DEFINED Output_FnEtcFlags_Error CALL FnEtcLogError FnEtcFlags "%Output_FnEtcFlags_Error%"
+IF DEFINED Output_FnEtcFlags_Error EXIT /B 1
 
-:MISSING_VALUE
-    CALL FnEtcLogError FnEtcFlags "Missing value for flag %LPRE_KEY%"
-    CALL :CLEANUP
-    EXIT /B 1
-
-:MISSING_LIST_VALUE
-    CALL FnEtcLogError FnEtcFlags "Flag %LPRE_LIST_KEY% requires at least one value"
-    CALL :CLEANUP
-    EXIT /B 1
-
-:PARSE_DONE
-    IF DEFINED FLAG_PASSTHRU SET "FLAG_PASSTHRU=%FLAG_PASSTHRU:~1%"
-    IF DEFINED GLOBAL_FlagPassthru SET "GLOBAL_FlagPassthru=%GLOBAL_FlagPassthru:~1%"
-    CALL :CLEANUP
-    EXIT /B 0
-
-:CANONICALIZE
-    :: Maps a short flag name onto its long name; unknown names pass through.
-    SET "LPRE_CANON=%~1"
-    FOR %%A IN (%LPRE_FLAG_ALIASES%) DO FOR /F "tokens=1,2 delims=:" %%X IN ("%%A") DO IF /I "%%X"=="%~1" SET "LPRE_CANON=%%Y"
-    EXIT /B 0
-
-:IS_LISTED
-    FOR %%K IN (%~2) DO IF /I "%%K"=="%~1" EXIT /B 0
-    EXIT /B 1
-
-:CLEANUP
-    SET "LPRE_TOKEN="
-    SET "LPRE_KEY="
-    SET "LPRE_GKEY="
-    SET "LPRE_CANON="
-    SET "LPRE_PEEK="
-    SET "LPRE_LIST_KEY="
-    SET "LPRE_LIST_GKEY="
-    SET "LPRE_LIST_VALUE="
-    SET "LPRE_LIST_N="
-    EXIT /B 0
+CALL FnEtcLogInfo FnEtcFlags "Outputted Args: %Output_FnEtcFlags_Args%"
+CALL FnEtcLogDebug FnEtcFlags "SET Output_FnEtcFlags_Args: %Output_FnEtcFlags_Args%"
+EXIT /B 0

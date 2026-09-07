@@ -1,60 +1,42 @@
-:: FnEtcDataProjectAppDefinitions <SuiteId> <ProjectId>
-:: leprechaun function data ProjectAppDefinitions <SuiteId> <ProjectId>
-:: -- Reads Data/Organizations/<OrgDir>/Suites/<SuiteDir>/Apps.Definitions.csv and exports:
-:: --   GLOBAL_DataProjectAppDefinitions                         (<ProjectIdentifier,AppIdentifier>[]) space separated project identifiers
-:: --   GLOBAL_DataProjectAppDefinition<Index>ProjectId          (ProjectIdentifier) command identifier
-:: --   GLOBAL_DataProjectAppDefinition<Index>AppId              (AppIdentifier) command identifier
+:: FnEtcDataProjectAppDefinitions <OrgId> <SuiteId> <AppId>
+:: -- Output:
+:: --   Output_Data_ProjectAppDefinitionsProjects                   (ProjectIdentifier[]) space separated project identifiers
+:: --   Output_Data_ProjectAppDefinitionsProjectsCount              (Integer) count of project identifiers
 
 @ECHO OFF
 
-SET "Export_SuiteId=%~1"
-SET "Export_ProjectId=%~2"
+:: INPUT
+SET "Input_OrgId=%~1"
+SET "Input_SuiteId=%~2"
+SET "Input_AppId=%~3"
 
-IF NOT DEFINED Export_SuiteId (
-    CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Missing required argument ^<SuiteId^>"
-    EXIT /B 1
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument ^<OrgId^>" & EXIT /B 1
+IF NOT DEFINED Input_SuiteId CALL FnEtcLogError %~n0 "Missing required argument ^<SuiteId^>" & EXIT /B 1
+IF NOT DEFINED Input_AppId CALL FnEtcLogError %~n0 "Missing required argument ^<AppId^>" & EXIT /B 1
+
+:: RESOLVE
+CALL FnEtcCacheGet "OrgIdentifier[%Input_OrgId%]"
+SET "Output_Resolved_OrgIdentifier=%Output_Cache_OrgIdentifier%"
+IF NOT DEFINED Output_Resolved_OrgIdentifier CALL FnEtcResolveOrganization "%Input_OrgId%"
+
+CALL FnEtcCacheGet "SuiteIdentifier[%Input_OrgId%][%Input_SuiteId%]"
+SET "Output_Resolved_SuiteIdentifier=%Output_Cache_SuiteIdentifier%"
+IF NOT DEFINED Output_Resolved_SuiteIdentifier CALL FnEtcResolveSuite "%Input_OrgId%" "%Input_SuiteId%"
+
+:: MAPPING(A: AppId, B: ProjectId)
+SET "Output_Data_ProjectAppDefinitionsProjects="
+SET "Output_Data_ProjectAppDefinitionsProjectsCount=0"
+SET "Local_DataFile=%~dp0..\..\..\..\Data\Organizations\%Output_Resolved_OrgIdentifier%\Suites\%Output_Resolved_SuiteIdentifier%\Apps.Definitions.csv"
+FOR /F "usebackq skip=1 tokens=1-2 delims=, eol=#" %%A IN ("%Local_DataFile%") DO (
+    IF /I "%%A"=="%Input_AppId%" (
+        IF DEFINED Output_Data_ProjectAppDefinitionsProjects CALL SET "Output_Data_ProjectAppDefinitionsProjects=%%Output_Data_ProjectAppDefinitionsProjects%% %%B"
+        IF NOT DEFINED Output_Data_ProjectAppDefinitionsProjects CALL SET "Output_Data_ProjectAppDefinitionsProjects=%%B"
+        SET /A Output_Data_ProjectAppDefinitionsProjectsCount+=1
+        CALL FnEtcCacheSet "ProjectAppDefinitionsProjects[%Input_OrgId%][%Input_SuiteId%]" "%%Output_Data_ProjectAppDefinitionsProjects%%"
+        CALL FnEtcCacheSet "ProjectAppDefinitionProjectId[%Input_OrgId%][%Input_SuiteId%][%%B]" "%%B"
+    )
 )
 
-IF NOT DEFINED Export_ProjectId (
-    CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Missing required argument ^<ProjectId^>"
-    EXIT /B 1
-)
+IF NOT DEFINED Output_Data_ProjectAppDefinitionsProjects CALL FnEtcLogWarning %~n0 "No app definitions found in %Local_DataFile%" & EXIT /B 1
 
-CALL leprechaun function env DataPath
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcResolveSuite "%Export_SuiteId%"
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcResolveOrganization "%GLOBAL_ResolvedSuiteOrgId%"
-IF ERRORLEVEL 1 EXIT /B 1
-
-SET "Local_DataProjectAppDefinitionsFile=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedOrgIdentifier%\Suites\%GLOBAL_ResolvedSuiteIdentifier%\Apps.Definitions.csv"
-IF NOT EXIST "%Local_DataProjectAppDefinitionsFile%" (
-    CALL leprechaun function log error FnEtcDataProjectAppDefinitions "Apps.Definitions.csv not found at %Local_DataProjectAppDefinitionsFile%"
-    EXIT /B 1
-)
-
-FOR /F "delims==" %%V IN ('SET GLOBAL_DataProjectAppDefinitions 2^>NUL') DO SET "%%V="
-
-:: Extract -> ProjectIdentifier,AppIdentifier
-SET "Local_Index=0"
-FOR /F "usebackq skip=1 tokens=1-2 delims=, eol=#" %%A IN ("%Local_DataProjectAppDefinitionsFile%") DO (
-    CALL SET "GLOBAL_DataProjectAppDefinitions=%%GLOBAL_DataProjectAppDefinitions%% ^<%%A,%%B^>"
-    CALL SET "GLOBAL_DataProjectAppDefinition%%Local_Index%%ProjectId=%%A"
-    CALL SET "GLOBAL_DataProjectAppDefinition%%Local_Index%%AppId=%%B"
-    SET /A Local_Index+=1
-)
-
-:: Trim if possible
-SET "GLOBAL_DataProjectAppDefinitions=%GLOBAL_DataProjectAppDefinitions:~1%"
-IF NOT DEFINED GLOBAL_DataProjectAppDefinitions (
-    CALL leprechaun function log error FnEtcDataProjectAppDefinitions "No app definitions found in %Local_DataProjectAppDefinitionsFile%"
-    SET "Local_DataProjectAppDefinitionsFile="
-    EXIT /B 1
-)
-
-:: Cleanup
-SET "Local_DataProjectAppDefinitionsFile="
-SET "Local_Index="
 EXIT /B 0

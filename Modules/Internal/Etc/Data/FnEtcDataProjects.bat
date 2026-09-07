@@ -1,95 +1,77 @@
-:: FnEtcDataProjects <SuiteId> <Flag[]>
-:: leprechaun function data Projects <SuiteId>
-:: -- Reads Data/Organizations/<OrgDir>/Suites/<SuiteDir>/Projects.csv and exports:
-:: --   GLOBAL_DataProjects                     (ProjectIdentifier[]) space separated identifiers
-:: --   GLOBAL_DataProjectsInternal             (ProjectIdentifier[]) the subset with IsExternal false
-:: --   GLOBAL_DataProjectsExternal             (ProjectIdentifier[]) the subset with IsExternal true
-:: --   GLOBAL_DataProjectsCount                (Computed) number of projects
-:: --   GLOBAL_DataProjectsSuiteId              (FK) the suite these projects were read for
-:: --   GLOBAL_DataProject<Index>Id             (ProjectIdentifier) command identifier
-:: --   GLOBAL_DataProject<Index>Identifier     (ProjectFriendlyIdentifier) directory name
-:: --   GLOBAL_DataProject<Index>FrameworkId    (ProjectFrameworkIdentifier) framework identifier
-:: --   GLOBAL_DataProject<Index>Name           (ProjectFriendlyName) friendly name
-:: --   GLOBAL_DataProject<Index>Type           (ProjectType) Server, Client or Misc
-:: --   GLOBAL_DataProject<Index>RootPath       (ProjectRootPath) root path, relative to the suite
-:: --   GLOBAL_DataProject<Index>IsExternal     (IsExternal) true or false
-:: --   GLOBAL_DataProject<Index>SuiteId        (FK) owning suite command identifier
-:: -- Flags:
-:: --   --refresh: reread the CSV even when this suite is already loaded
-:: --
-:: -- NOTE: Locals are Export_ rather than Function_ on purpose. With no
-:: --       SETLOCAL, a Function_ name here would be the CALLER's variable,
-:: --       and clearing one on the way out would blank it under them.
-:: -- NOTE: No SETLOCAL -- this script exists to export GLOBAL_DataProject variables.
+:: FnEtcDataProjects <OrgId> <SuiteId>
+:: -- Output:
+:: --   Output_Data_Projects                     (ProjectIdentifier[]) space separated identifiers
+:: --   Output_Data_ProjectsInternal             (ProjectIdentifier[]) the subset with IsExternal false
+:: --   Output_Data_ProjectsExternal             (ProjectIdentifier[]) the subset with IsExternal true
+:: --   Output_Data_ProjectsCount                (Computed) number of projects
+:: --   Output_Data_ProjectsSuiteId              (FK) the suite these projects were read for
+:: --   Output_Data_Project<Index>Id             (ProjectIdentifier) command identifier
+:: --   Output_Data_Project<Index>Identifier     (ProjectFriendlyIdentifier) directory name
+:: --   Output_Data_Project<Index>FrameworkId    (ProjectFrameworkIdentifier) framework identifier
+:: --   Output_Data_Project<Index>Name           (ProjectFriendlyName) friendly name
+:: --   Output_Data_Project<Index>Type           (ProjectType) Server, Client or Misc
+:: --   Output_Data_Project<Index>RootPath       (ProjectRootPath) root path, relative to the suite
+:: --   Output_Data_Project<Index>IsExternal     (IsExternal) true or false
+:: --   Output_Data_Project<Index>SuiteId        (FK) owning suite command identifier
 
 @ECHO OFF
 
-SET "Export_SuiteId=%~1"
+:: INPUT
+SET "Input_OrgId=%~1"
+SET "Input_SuiteId=%~2"
 
-IF NOT DEFINED Export_SuiteId (
-    CALL FnEtcLogError FnEtcDataProjects "Missing required argument <SuiteId>"
-    EXIT /B 1
+IF NOT DEFINED Input_OrgId CALL FnEtcLogError %~n0 "Missing required argument ^<OrgId^>" & EXIT /B 1
+IF NOT DEFINED Input_SuiteId CALL FnEtcLogError %~n0 "Missing required argument ^<SuiteId^>" & EXIT /B 1
+
+:: RESOLVE
+CALL FnEtcCacheGet "OrgIdentifier[%Input_OrgId%]"
+SET "Output_Resolved_OrgIdentifier=%Output_Cache_OrgIdentifier%"
+IF NOT DEFINED Output_Resolved_OrgIdentifier CALL FnEtcResolveOrganization "%Input_OrgId%"
+
+CALL FnEtcCacheGet "SuiteIdentifier[%Input_OrgId%][%Input_SuiteId%]"
+SET "Output_Resolved_SuiteIdentifier=%Output_Cache_SuiteIdentifier%"
+IF NOT DEFINED Output_Resolved_SuiteIdentifier CALL FnEtcResolveSuite "%Input_OrgId%" "%Input_SuiteId%"
+
+:: MAPPING(A: Id, B: Identifier, C: FrameworkId, D: Name, E: Type, F: Description, G: RootPath, H: IsExternal)
+SET "Output_Data_Projects="
+SET "Output_Data_ProjectsInternal="
+SET "Output_Data_ProjectsExternal="
+SET "Output_Data_ProjectsCount=0"
+SET "Local_DataPath=%~dp0..\..\..\..\Data\Organizations\%Output_Resolved_OrgIdentifier%\Suites\%Output_Resolved_SuiteIdentifier%\Projects.csv"
+FOR /F "usebackq skip=1 tokens=1-8 delims=, eol=#" %%a IN ("%Local_DataPath%") DO (
+    IF DEFINED Output_Data_Projects CALL SET "Output_Data_Projects=%%Output_Data_Projects%% %%a"
+    IF NOT DEFINED Output_Data_Projects SET "Output_Data_Projects=%%a"
+    IF /I "%%h"=="true" (
+        IF DEFINED Output_Data_ProjectsExternal CALL SET "Output_Data_ProjectsExternal=%%Output_Data_ProjectsExternal%% %%a"
+        IF NOT DEFINED Output_Data_ProjectsExternal SET "Output_Data_ProjectsExternal=%%a"
+    ) ELSE (
+        IF DEFINED Output_Data_ProjectsInternal CALL SET "Output_Data_ProjectsInternal=%%Output_Data_ProjectsInternal%% %%a"
+        IF NOT DEFINED Output_Data_ProjectsInternal SET "Output_Data_ProjectsInternal=%%a"
+    )
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%Id=%%a"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%Identifier=%%b"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%FrameworkId=%%c"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%Name=%%d"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%Type=%%e"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%RootPath=%%g"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%IsExternal=%%h"
+    CALL SET "Output_Data_Project%%Output_Data_ProjectsCount%%SuiteId=%Input_SuiteId%"
+    SET /A Output_Data_ProjectsCount+=1
+    CALL FnEtcCacheSet "Projects[%Input_OrgId%][%Input_SuiteId%]" "%%Output_Data_Projects%%"
+    CALL FnEtcCacheSet "ProjectsInternal[%Input_OrgId%][%Input_SuiteId%]" "%%Output_Data_ProjectsInternal%%"
+    CALL FnEtcCacheSet "ProjectsExternal[%Input_OrgId%][%Input_SuiteId%]" "%%Output_Data_ProjectsExternal%%"
+    CALL FnEtcCacheSet "ProjectsCount[%Input_OrgId%][%Input_SuiteId%]" "%%Output_Data_ProjectsCount%%"
+    CALL FnEtcCacheSet "ProjectId[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%a"
+    CALL FnEtcCacheSet "ProjectIdentifier[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%b"
+    CALL FnEtcCacheSet "ProjectFrameworkId[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%c"
+    CALL FnEtcCacheSet "ProjectName[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%d"
+    CALL FnEtcCacheSet "ProjectType[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%e"
+    CALL FnEtcCacheSet "ProjectRootPath[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%g"
+    CALL FnEtcCacheSet "ProjectIsExternal[%Input_OrgId%][%Input_SuiteId%][%%a]" "%%h"
+    CALL FnEtcCacheSet "ProjectSuiteId[%Input_OrgId%][%Input_SuiteId%][%%a]" "%Input_SuiteId%"
 )
 
-CALL FnEtcFlags %*
+IF NOT DEFINED Output_Data_Projects CALL FnEtcLogWarning %~n0 "No projects found in %Local_DataPath%" & EXIT /B 1
 
-:: Memoized per suite: a different suite always forces a reread.
-IF /I "%GLOBAL_DataProjectsSuiteId%"=="%Export_SuiteId%" IF NOT DEFINED GLOBAL_FlagRefresh (
-    SET "Export_SuiteId="
-    EXIT /B 0
-)
-
-CALL FnEtcEnvGetDataPath
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcResolveSuite "%Export_SuiteId%"
-IF ERRORLEVEL 1 EXIT /B 1
-
-CALL FnEtcResolveOrganization "%GLOBAL_ResolvedSuiteOrgId%"
-IF ERRORLEVEL 1 EXIT /B 1
-
-SET "Local_DataProjectsFile=%GLOBAL_DataPath%\Organizations\%GLOBAL_ResolvedOrgIdentifier%\Suites\%GLOBAL_ResolvedSuiteIdentifier%\Projects.csv"
-IF NOT EXIST "%Local_DataProjectsFile%" (
-    CALL FnEtcLogError FnEtcDataProjects "Projects.csv not found at %Local_DataProjectsFile%"
-    SET "Local_DataProjectsFile="
-    SET "Export_SuiteId="
-    EXIT /B 1
-)
-
-FOR /F "delims==" %%V IN ('SET GLOBAL_DataProject 2^>NUL') DO SET "%%V="
-
-:: Extract -> Identifier,FriendlyIdentifier,FrameworkIdentifier,FriendlyName,Type,Description,RootPath,IsExternal
-:: CALL SET, because a plain SET inside a FOR body would expand the accumulator
-:: once at block parse time and leave only the last row behind.
-SET "Local_Index=0"
-:: Lowercase loop variables on purpose. FOR variables are case sensitive, and
-:: tokens=1-8 would otherwise claim %%G and %%H, so "%%GLOBAL_DataProjects%%"
-:: would read as loop variable %%G followed by the literal LOBAL_DataProjects.
-FOR /F "usebackq skip=1 tokens=1-8 delims=, eol=#" %%a IN ("%Local_DataProjectsFile%") DO (
-    CALL SET "GLOBAL_DataProjects=%%GLOBAL_DataProjects%% %%a"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%Id=%%a"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%Identifier=%%b"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%FrameworkId=%%c"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%Name=%%d"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%Type=%%e"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%RootPath=%%g"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%IsExternal=%%h"
-    CALL SET "GLOBAL_DataProject%%Local_Index%%SuiteId=%Export_SuiteId%"
-    IF /I "%%h"=="true" CALL SET "GLOBAL_DataProjectsExternal=%%GLOBAL_DataProjectsExternal%% %%a"
-    IF /I NOT "%%h"=="true" CALL SET "GLOBAL_DataProjectsInternal=%%GLOBAL_DataProjectsInternal%% %%a"
-    SET /A Local_Index+=1
-)
-
-:: A CSV holding only its header is a declared but empty collection, which
-:: is valid. Only a missing file is an error, and that was checked above.
-
-IF DEFINED GLOBAL_DataProjects SET "GLOBAL_DataProjects=%GLOBAL_DataProjects:~1%"
-IF DEFINED GLOBAL_DataProjectsInternal SET "GLOBAL_DataProjectsInternal=%GLOBAL_DataProjectsInternal:~1%"
-IF DEFINED GLOBAL_DataProjectsExternal SET "GLOBAL_DataProjectsExternal=%GLOBAL_DataProjectsExternal:~1%"
-SET "GLOBAL_DataProjectsCount=%Local_Index%"
-SET "GLOBAL_DataProjectsSuiteId=%Export_SuiteId%"
-
-SET "Local_DataProjectsFile="
-SET "Local_Index="
-SET "Export_SuiteId="
+SET "Output_Data_ProjectsSuiteId=%Input_SuiteId%"
 EXIT /B 0

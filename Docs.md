@@ -305,14 +305,14 @@ and would discard exactly what they exist to produce.
 
 | Function | Signature | Exports |
 |---|---|---|
-| `FnEtcEnvGetDataPath` | `FnEtcEnvGetDataPath` | `GLOBAL_DataPath` |
-| `FnEtcEnvGetRootRepoPath` | `FnEtcEnvGetRootRepoPath` | `ROOT_REPO_PATH` |
+| `FnEtcEnvGetDataPath` | `FnEtcEnvGetDataPath` | `Output_Env_DataPath` |
+| `FnEtcEnvGetRootRepoPath` | `FnEtcEnvGetRootRepoPath` | `Output_Env_RootRepoPath` |
 | `FnEtcCsvModules` | `FnEtcCsvModules` | `LPRE_MODULES` |
-| `FnEtcCsvOrgs` | `FnEtcCsvOrgs` | `GLOBAL_DataOrgs`, `GLOBAL_ORG_<id>_*` |
+| `FnEtcCsvOrgs` | `FnEtcCsvOrgs` | `Output_Data_Orgs`, `GLOBAL_ORG_<id>_*` |
 | `FnEtcCsvSuites` | `FnEtcCsvSuites ORG` | `LPRE_SUITES`, `LPRE_SUITES_ACTIVE`, `GLOBAL_SUITE_<id>_*` |
 | `FnEtcCsvProjects` | `FnEtcCsvProjects ORG SUITE` | `GLOBAL_PROJECTS`, `GLOBAL_PROJECTS_INTERNAL`, `GLOBAL_PROJECTS_EXTERNAL`, `GLOBAL_PROJECT_<id>_*` |
-| `FnEtcResolveSuite` | `FnEtcResolveSuite SUITE` | `GLOBAL_ResolvedSuiteOrgId`, `GLOBAL_ResolvedSuiteDataPath` |
-| `FnEtcResolveProjectPath` | `FnEtcResolveProjectPath SUITE PROJECT` | `GLOBAL_ResolvedProjectPath`, `GLOBAL_ResolvedProjectLabel` |
+| `FnEtcResolveSuite` | `FnEtcResolveSuite SUITE` | `Output_Resolved_SuiteOrgId`, `Output_Resolved_SuiteDataPath` |
+| `FnEtcResolveProjectPath` | `FnEtcResolveProjectPath SUITE PROJECT` | `Output_Resolved_ProjectPath`, `Output_Resolved_ProjectLabel` |
 
 A CSV holding only its header is a declared but empty collection, which is
 valid. A missing CSV is an error.

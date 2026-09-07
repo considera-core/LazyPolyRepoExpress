@@ -15,41 +15,41 @@ SETLOCAL EnableExtensions
 GOTO Constructor
 
 :Main
-    CALL FnEtcDataProjects "%Function_SuiteId%"
+    CALL FnEtcDataProjects "%Input_SuiteId%"
     IF ERRORLEVEL 1 GOTO Failure
 
     :: An explicit -p list wins over the suite's own internal project list, but
     :: each name in it still has to resolve.
-    IF NOT DEFINED Function_List SET "Function_List=%GLOBAL_DataProjectsInternal%"
+    IF NOT DEFINED Input_List SET "Input_List=%Output_Data_ProjectsInternal%"
 
     :: No internal projects is a valid empty collection, for the same reason.
-    IF NOT DEFINED Function_List (
-        CALL FnEtcLogInfo FnEtcForEachProject "No internal projects in suite %Function_SuiteId%, skipping"
+    IF NOT DEFINED Input_List (
+        CALL FnEtcLogInfo FnEtcForEachProject "No internal projects in suite %Input_SuiteId%, skipping"
         GOTO Destructor
     )
 
-    FOR %%P IN (%Function_List%) DO (
-        CALL %Function_FunctionName% "%Function_SuiteId%" "%Function_AppId%" "%%P" %Function_Tail%
-        IF ERRORLEVEL 1 SET "Function_ReturnCode=1"
+    FOR %%P IN (%Input_List%) DO (
+        CALL %Input_FunctionName% "%Input_SuiteId%" "%Input_AppId%" "%%P" %Input_Tail%
+        IF ERRORLEVEL 1 SET "Input_ReturnCode=1"
     )
 
     GOTO Destructor
 
 :Constructor
-    SET "Function_SuiteId=%~1"
-    SET "Function_AppId=%~2"
-    SET "Function_FunctionName=%~3"
-    SET "Function_Tail="
-    SET "Function_List="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
+    SET "Input_SuiteId=%~1"
+    SET "Input_AppId=%~2"
+    SET "Input_FunctionName=%~3"
+    SET "Input_Tail="
+    SET "Input_List="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
 
     CALL FnEtcFlags %*
 
     :: Snapshotted at once: FnEtcDataProjects calls FnEtcFlags for its own
     :: --refresh flag and does not SETLOCAL, so reading GLOBAL_FlagProjects after
     :: that call would find it already cleared.
-    SET "Function_List=%GLOBAL_FlagProjects%"
+    SET "Input_List=%GLOBAL_FlagProjects%"
 
     SHIFT
     SHIFT
@@ -57,37 +57,37 @@ GOTO Constructor
 
 :Collect
     IF [%1]==[] GOTO Collected
-    SET "Function_Tail=%Function_Tail% %1"
+    SET "Input_Tail=%Input_Tail% %1"
     SHIFT
     GOTO Collect
 
 :Collected
-    IF DEFINED Function_Tail SET "Function_Tail=%Function_Tail:~1%"
+    IF DEFINED Input_Tail SET "Input_Tail=%Input_Tail:~1%"
     GOTO Validate
 
 :Validate
-    IF NOT DEFINED Function_SuiteId (
-        SET "Function_Error=Missing required argument <SuiteId>"
+    IF NOT DEFINED Input_SuiteId (
+        SET "Input_Error=Missing required argument <SuiteId>"
         GOTO Failure
     )
 
-    IF NOT DEFINED Function_FunctionName (
-        SET "Function_Error=Missing required argument <FunctionName>"
+    IF NOT DEFINED Input_FunctionName (
+        SET "Input_Error=Missing required argument <FunctionName>"
         GOTO Failure
     )
     GOTO Main
 
 :Failure
-    SET "Function_ReturnCode=1"
+    SET "Input_ReturnCode=1"
     GOTO Destructor
 
 :Destructor
-    IF DEFINED Function_Error CALL FnEtcLogError FnEtcForEachProjectAppDefinition "%Function_Error%"
-    SET "Function_SuiteId="
-    SET "Function_AppId="
-    SET "Function_FunctionName="
-    SET "Function_Tail="
-    SET "Function_List="
-    SET "Function_Error="
-    SET "Function_ReturnCode=0"
-    EXIT /B %Function_ReturnCode%
+    IF DEFINED Input_Error CALL FnEtcLogError FnEtcForEachProjectAppDefinition "%Input_Error%"
+    SET "Input_SuiteId="
+    SET "Input_AppId="
+    SET "Input_FunctionName="
+    SET "Input_Tail="
+    SET "Input_List="
+    SET "Input_Error="
+    SET "Input_ReturnCode=0"
+    EXIT /B %Input_ReturnCode%

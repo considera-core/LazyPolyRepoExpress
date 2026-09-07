@@ -12,19 +12,19 @@
 @ECHO OFF
 SETLOCAL EnableExtensions
 
-SET "Function_Name=%~1"
-SET "Function_Message=%~2"
+SET "Input_Name=%~1"
+SET "Input_Message=%~2"
 
-IF NOT DEFINED Function_Name (
+IF NOT DEFINED Input_Name (
     ECHO LeprechaunCLI:FnEtcLogError[F]: Missing required argument Function
     EXIT /B 1
 )
 
-IF NOT DEFINED Function_Message (
+IF NOT DEFINED Input_Message (
     ECHO LeprechaunCLI:FnEtcLogError[F]: Missing required argument Message
     EXIT /B 1
 )
 
 SETLOCAL EnableDelayedExpansion
-ECHO LeprechaunCLI:!Function_Name![E]: !Function_Message!
+ECHO LeprechaunCLI:!Input_Name![E]: !Input_Message!
 EXIT /B 0
