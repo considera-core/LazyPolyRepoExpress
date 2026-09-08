@@ -1,0 +1,10 @@
+{
+    "NgConfig": {
+        "PathServe": ".",
+        "PathBuild": ".",
+        "PathTest": ".",
+        "CommandServe": "npm run serve:all",
+        "CommandBuild": "npm run build:all",
+        "CommandTest": "npm run test:all"
+    }
+}

@@ -28,16 +28,20 @@ CALL FnEtcCacheGet ProjectIdentifier "[%Input_OrgId%][%Input_SuiteId%][%Input_Pr
 CALL FnEtcCacheGet ProjectFrameworkId "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
 CALL FnEtcCacheGet ProjectName "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
 CALL FnEtcCacheGet ProjectType "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
+CALL FnEtcCacheGet ProjectDescription "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
 CALL FnEtcCacheGet ProjectRootPath "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
+CALL FnEtcCacheGet ProjectHomeBranch "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
 CALL FnEtcCacheGet ProjectIsExternal "[%Input_OrgId%][%Input_SuiteId%][%Input_ProjectId%]" || CALL FnEtcDataProjects %Input_OrgId% %Input_SuiteId%
 
-IF DEFINED Output_Cache_ProjectId IF DEFINED Output_Cache_ProjectIdentifier IF DEFINED Output_Cache_ProjectFrameworkId IF DEFINED Output_Cache_ProjectName IF DEFINED Output_Cache_ProjectType IF DEFINED Output_Cache_ProjectRootPath IF DEFINED Output_Cache_ProjectIsExternal (
+IF DEFINED Output_Cache_ProjectId IF DEFINED Output_Cache_ProjectIdentifier IF DEFINED Output_Cache_ProjectFrameworkId IF DEFINED Output_Cache_ProjectName IF DEFINED Output_Cache_ProjectType IF DEFINED Output_Cache_ProjectDescription IF DEFINED Output_Cache_ProjectRootPath IF DEFINED Output_Cache_ProjectHomeBranch IF DEFINED Output_Cache_ProjectIsExternal (
     CALL SET "Output_Resolved_ProjectId=%Output_Cache_ProjectId%"
     CALL SET "Output_Resolved_ProjectIdentifier=%Output_Cache_ProjectIdentifier%"
     CALL SET "Output_Resolved_ProjectFrameworkId=%Output_Cache_ProjectFrameworkId%"
     CALL SET "Output_Resolved_ProjectName=%Output_Cache_ProjectName%"
     CALL SET "Output_Resolved_ProjectType=%Output_Cache_ProjectType%"
+    CALL SET "Output_Resolved_ProjectDescription=%Output_Cache_ProjectDescription%"
     CALL SET "Output_Resolved_ProjectRootPath=%Output_Cache_ProjectRootPath%"
+    CALL SET "Output_Resolved_ProjectHomeBranch=%Output_Cache_ProjectHomeBranch%"
     CALL SET "Output_Resolved_ProjectIsExternal=%Output_Cache_ProjectIsExternal%"
     EXIT /B 0
 )
@@ -55,6 +59,8 @@ FOR %%P IN (%Output_Data_Projects%) DO (
             CALL SET "Local_ProjectFrameworkId=!Output_Data_Project%Local_Index%FrameworkId!"
             CALL SET "Local_ProjectName=!Output_Data_Project%Local_Index%Name!"
             CALL SET "Local_ProjectType=!Output_Data_Project%Local_Index%Type!"
+            CALL SET "Local_ProjectDescription=!Output_Data_Project%Local_Index%Description!"
+            CALL SET "Local_ProjectHomeBranch=!Output_Data_Project%Local_Index%HomeBranch!"
             CALL SET "Local_ProjectIsExternal=!Output_Data_Project%Local_Index%IsExternal!"
             CALL SET "Local_ProjectRootPath=!Output_Data_Project%Local_Index%RootPath!"
         )
@@ -67,6 +73,8 @@ ENDLOCAL ^
     & SET "Output_Resolved_ProjectFrameworkId=%Local_ProjectFrameworkId%" ^
     & SET "Output_Resolved_ProjectName=%Local_ProjectName%" ^
     & SET "Output_Resolved_ProjectType=%Local_ProjectType%" ^
+    & SET "Output_Resolved_ProjectDescription=%Local_ProjectDescription%" ^
+    & SET "Output_Resolved_ProjectHomeBranch=%Local_ProjectHomeBranch%" ^
     & SET "Output_Resolved_ProjectIsExternal=%Local_ProjectIsExternal%" ^
     & SET "Output_Resolved_ProjectRootPath=%Local_ProjectRootPath%"
 

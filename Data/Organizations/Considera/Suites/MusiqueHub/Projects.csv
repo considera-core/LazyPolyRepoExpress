@@ -1,13 +1,13 @@
-ProjectIdentifier,ProjectFriendlyIdentifier,ProjectFrameworkIdentifier,ProjectFriendlyName,ProjectType,ProjectDescription,ProjectRootPath,IsExternal
-api,Api,dotnet,Dotnet10Api,Server,API Backend for ConsideraWeb,/ConsideraWeb.Api,false
-bff,Bff,dotnet,Dotnet10Bff,Server,BFF Backend for ConsideraWeb,/ConsideraWeb.Bff,false
-cli,Cli,NULL,BatchCli,Misc,Legacy CLI for ConsideraWeb,/ConsideraWeb.Cli,true
-client,Client,ng,AngularClient,Client,Angular Frontend for ConsideraWeb,/ConsideraWeb.Client,false
-mcp,Mcp,NULL,BatchMcp,Server,MCP Server for ConsideraWeb,/ConsideraWeb.Mcp,false
-proxy,Proxy,NULL,BatchProxy,Misc,Proxy Store for ConsideraWeb,/ConsideraWeb.Proxy,true
-terraform,Terraform,terraform,Terraform,Server,Terraform for ConsideraWeb,/ConsideraWeb.Terraform,false
-unity-sdk,UnitySdk,dotnet,UnitySdk,Server,Unity SDK for ConsideraWeb,/ConsideraWeb.UnitySdk,false
-unity-workspace,UnityWorkspace,unity,UnityWorkspace,Client,Unity Workspace for ConsideraWeb,/ConsideraWeb.UnityWorkspace,false
+ProjectIdentifier,ProjectFriendlyIdentifier,ProjectFrameworkIdentifier,ProjectFriendlyName,ProjectType,ProjectDescription,ProjectRootPath,ProjectHomeBranch,IsExternal
+api,Api,dotnet,Dotnet10Api,Server,API Backend for ConsideraWeb,/ConsideraWeb.Api,master,false
+bff,Bff,dotnet,Dotnet10Bff,Server,BFF Backend for ConsideraWeb,/ConsideraWeb.Bff,master,false
+cli,Cli,NULL,BatchCli,Misc,Legacy CLI for ConsideraWeb,/ConsideraWeb.Cli,master,true
+client,Client,ng,AngularClient,Client,Angular Frontend for ConsideraWeb,/ConsideraWeb.Client,master,false
+mcp,Mcp,NULL,BatchMcp,Server,MCP Server for ConsideraWeb,/ConsideraWeb.Mcp,master,false
+proxy,Proxy,NULL,BatchProxy,Misc,Proxy Store for ConsideraWeb,/ConsideraWeb.Proxy,master,true
+terraform,Terraform,terraform,Terraform,Server,Terraform for ConsideraWeb,/ConsideraWeb.Terraform,master,false
+unity-sdk,UnitySdk,dotnet,UnitySdk,Server,Unity SDK for ConsideraWeb,/ConsideraWeb.UnitySdk,master,false
+unity-workspace,UnityWorkspace,unity,UnityWorkspace,Client,Unity Workspace for ConsideraWeb,/ConsideraWeb.UnityWorkspace,master,false
 
 alias,name,label,type,client,server,home
 public,Considera.MusiqueHub,MusiqueHub,bff,Considera.MusiqueHub.Client,Considera.MusiqueHub.Server,master

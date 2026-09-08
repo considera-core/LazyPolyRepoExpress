@@ -1,0 +1,8 @@
+{
+    "DotnetConfig": {
+        "PathSln": "ConsideraBff.sln",
+        "PathCsproj": "ConsideraBff/Considera.Bff.csproj",
+        "PathTestCsproj": "ConsideraBff/ConsideraWeb.Bff.Tests.csproj",
+        "PathSdkCsproj": "ConsideraBff/ConsideraWeb.Bff.Sdk.csproj"
+    }
+}

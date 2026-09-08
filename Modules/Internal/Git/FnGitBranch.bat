@@ -1,4 +1,10 @@
 :: FnGitBranch <OrgId> <SuiteId> <ProjectId>
+:: -- Input:
+:: --   <OrgId>             The ID of the organization
+:: --   <SuiteId>           The ID of the suite
+:: --   <ProjectId>         The ID of the project
+:: -- Output:
+:: --   void strout         The current Git branch
 
 @ECHO OFF
 

@@ -1,0 +1,4 @@
+node_modules/
+storybook-static/
+# Generated from Modules/**/*.bat by scripts/generate-module-stories.mjs
+src/stories/Modules/

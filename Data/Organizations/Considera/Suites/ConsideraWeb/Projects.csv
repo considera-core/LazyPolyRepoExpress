@@ -1,21 +1,21 @@
-ProjectIdentifier,ProjectFriendlyIdentifier,ProjectFrameworkIdentifier,ProjectFriendlyName,ProjectType,ProjectDescription,ProjectRootPath,IsExternal
-api,Api,dotnet,Dotnet10Api,Server,API Backend for ConsideraWeb,ConsideraWeb.Api,false
-bff,Bff,dotnet,Dotnet10Bff,Server,BFF Backend for ConsideraWeb,ConsideraWeb.Bff,false
-cli,Cli,NULL,BatchCli,Misc,Legacy CLI for ConsideraWeb,ConsideraWeb.Cli,true
-client,Client,ng,AngularClient,Client,Angular Frontend for ConsideraWeb,ConsideraWeb.Client,false
-cloud,CloudPortalClient,ng,AngularCloudPortalClient,Client,Angular Frontend for ConsideraWeb Cloud,ConsideraWeb.Client,false
-user,UserPortalClient,ng,AngularUserPortalClient,Client,Angular Frontend for ConsideraWeb User Portal,ConsideraWeb.Client,false
-admin,AdminPortalClient,ng,AngularAdminPortalClient,Client,Angular Frontend for ConsideraWeb Admin Portal,ConsideraWeb.Client,false
-web,WebPortalClient,ng,AngularWebPortalClient,Client,Angular Frontend for ConsideraWeb Web Portal,ConsideraWeb.Client,false
-csv,CsvPortalClient,ng,AngularCsvPortalClient,Client,Angular Frontend for ConsideraWeb CSV Portal,ConsideraWeb.Client,false
-incremental,IncrementalPortalClient,ng,AngularIncrementalPortalClient,Client,Angular Frontend for ConsideraWeb Incremental Portal,ConsideraWeb.Client,false
-launcher,LauncherPortalClient,ng,AngularLauncherPortalClient,Client,Angular Frontend for ConsideraWeb Launcher Portal,ConsideraWeb.Client,false
-games,GamesPortalClient,ng,AngularGamesPortalClient,Client,Angular Frontend for ConsideraWeb Games Portal,ConsideraWeb.Client,false
-health,HealthPortalClient,ng,AngularHealthPortalClient,Client,Angular Frontend for ConsideraWeb Health Portal,ConsideraWeb.Client,false
-learning,LearningPortalClient,ng,AngularLearningPortalClient,Client,Angular Frontend for ConsideraWeb Learning Portal,ConsideraWeb.Client,false
-shared,SharedServicesClient,ng,AngularSharedServicesClient,Client,Angular Lib for ConsideraWeb Client,ConsideraWeb.Client,false
-mcp,Mcp,NULL,BatchMcp,Server,MCP Server for ConsideraWeb,ConsideraWeb.Mcp,false
-proxy,Proxy,caddy,BatchProxy,Misc,Proxy Store for ConsideraWeb,ConsideraWeb.Proxy,true
-terraform,Terraform,terraform,Terraform,Server,Terraform for ConsideraWeb,ConsideraWeb.Terraform,false
-unity-sdk,UnitySdk,dotnet,UnitySdk,Server,Unity SDK for ConsideraWeb,ConsideraWeb.UnitySdk,false
-unity-workspace,UnityWorkspace,unity,UnityWorkspace,Client,Unity Workspace for ConsideraWeb,ConsideraWeb.UnityWorkspace,false
+ProjectIdentifier,ProjectFriendlyIdentifier,ProjectFrameworkIdentifier,ProjectFriendlyName,ProjectType,ProjectDescription,ProjectRootPath,ProjectHomeBranch,IsExternal
+api,Api,dotnet,Dotnet10Api,Server,API Backend for ConsideraWeb,ConsideraWeb.Api,master,false
+bff,Bff,dotnet,Dotnet10Bff,Server,BFF Backend for ConsideraWeb,ConsideraWeb.Bff,master,false
+cli,Cli,NULL,BatchCli,Misc,Legacy CLI for ConsideraWeb,ConsideraWeb.Cli,master,true
+client,Client,ng,AngularClient,Client,Angular Frontend for ConsideraWeb,ConsideraWeb.Client,master,false
+cloud,CloudPortalClient,ng,AngularCloudPortalClient,Client,Angular Frontend for ConsideraWeb Cloud,ConsideraWeb.Client,master,false
+user,UserPortalClient,ng,AngularUserPortalClient,Client,Angular Frontend for ConsideraWeb User Portal,ConsideraWeb.Client,master,false
+admin,AdminPortalClient,ng,AngularAdminPortalClient,Client,Angular Frontend for ConsideraWeb Admin Portal,ConsideraWeb.Client,master,false
+web,WebPortalClient,ng,AngularWebPortalClient,Client,Angular Frontend for ConsideraWeb Web Portal,ConsideraWeb.Client,master,false
+csv,CsvPortalClient,ng,AngularCsvPortalClient,Client,Angular Frontend for ConsideraWeb CSV Portal,ConsideraWeb.Client,master,false
+incremental,IncrementalPortalClient,ng,AngularIncrementalPortalClient,Client,Angular Frontend for ConsideraWeb Incremental Portal,ConsideraWeb.Client,master,false
+launcher,LauncherPortalClient,ng,AngularLauncherPortalClient,Client,Angular Frontend for ConsideraWeb Launcher Portal,ConsideraWeb.Client,master,false
+games,GamesPortalClient,ng,AngularGamesPortalClient,Client,Angular Frontend for ConsideraWeb Games Portal,ConsideraWeb.Client,master,false
+health,HealthPortalClient,ng,AngularHealthPortalClient,Client,Angular Frontend for ConsideraWeb Health Portal,ConsideraWeb.Client,master,false
+learning,LearningPortalClient,ng,AngularLearningPortalClient,Client,Angular Frontend for ConsideraWeb Learning Portal,ConsideraWeb.Client,master,false
+shared,SharedServicesClient,ng,AngularSharedServicesClient,Client,Angular Lib for ConsideraWeb Client,ConsideraWeb.Client,master,false
+mcp,Mcp,NULL,BatchMcp,Server,MCP Server for ConsideraWeb,ConsideraWeb.Mcp,master,false
+proxy,Proxy,caddy,BatchProxy,Misc,Proxy Store for ConsideraWeb,ConsideraWeb.Proxy,master,true
+terraform,Terraform,terraform,Terraform,Server,Terraform for ConsideraWeb,ConsideraWeb.Terraform,master,false
+unity-sdk,UnitySdk,dotnet,UnitySdk,Server,Unity SDK for ConsideraWeb,ConsideraWeb.UnitySdk,master,false
+unity-workspace,UnityWorkspace,unity,UnityWorkspace,Client,Unity Workspace for ConsideraWeb,ConsideraWeb.UnityWorkspace,master,false

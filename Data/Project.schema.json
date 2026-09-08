@@ -1,0 +1,16 @@
+{
+    "DotnetConfig": {
+        "PathSln": "string",
+        "PathCsproj": "string",
+        "PathTestCsproj": "string",
+        "PathSdkCsproj": "string"
+    },
+    "NgConfig": {
+        "PathServe": "string",
+        "PathBuild": "string",
+        "PathTest": "string",
+        "CommandServe": "string",
+        "CommandBuild": "string",
+        "CommandTest": "string"
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "NgConfig": {
+        "PathServe": "projects/cloud-portal",
+        "PathBuild": "projects/cloud-portal",
+        "PathTest": "projects/cloud-portal",
+        "CommandServe": "npm run serve:cloud",
+        "CommandBuild": "npm run build:cloud",
+        "CommandTest": "npm run test:cloud"
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "DotnetConfig": {
+        "PathSln": "ConsideraApi.sln",
+        "PathCsproj": "ConsideraApi/Considera.Api.csproj",
+        "PathTestCsproj": "ConsideraApi/ConsideraWeb.Api.Tests.csproj",
+        "PathSdkCsproj": "ConsideraApi/ConsideraWeb.Api.Sdk.csproj"
+    }
+}
