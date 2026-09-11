@@ -1,0 +1,47 @@
+@let data = _data();
+<forge-card no-padding>
+  <forge-expansion-panel open>
+    <forge-toolbar slot="header" role="button">
+      <div slot="start" class="forge-typography--heading3 global-center-y" style="display: inline-flex;">
+        <span i18n>Clerk fees ( </span>
+        <tyl-common-dynamic-label-value
+          style="width: unset"
+          [decimalPlaces]="2"
+          [inputType]="FormInputTypeEnum.Currency"
+          [value]="_totalValue().toString()" />
+        <span i18n>)</span>
+      </div>
+      <forge-button
+        slot="end" variant="outlined" style="margin-right: 1rem" forge-ignore
+        [disabled]="_saving() || _fetching() || _editing()"
+        (click)="_handleRecalculateClick()">
+        <forge-icon slot="start" name="refresh" />
+        <span i18n>Recalculate fees</span>
+      </forge-button>
+      <forge-open-icon slot="end" />
+    </forge-toolbar>
+    <forge-scaffold>
+      <div slot="body">
+        @if (data) {
+          <forge-table
+            slot="body"
+            [columnConfigurations]="_columnConfiguration"
+            [data]="data"
+          />
+          <forge-toolbar slot="footer" no-padding no-divider>
+            <div slot="start" class="global-padding-x-roomy global-flex-row">
+              <span class="forge-typography--heading2" style="min-width: 22.5rem">
+                14. Total of clerks fees</span>
+              <tyl-common-dynamic-label-value
+                class="forge-typography--heading2" style="min-width: 12rem; text-align: right; padding-right: 1rem"
+                [loading]="_saving() || _fetching()"
+                [decimalPlaces]="2"
+                [inputType]="FormInputTypeEnum.Currency"
+                [value]="_totalValue().toString()" />
+            </div>
+          </forge-toolbar>
+        }
+      </div>
+    </forge-scaffold>
+  </forge-expansion-panel>
+</forge-card>

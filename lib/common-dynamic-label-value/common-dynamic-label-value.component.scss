@@ -1,0 +1,25 @@
+:host {
+  width: 100%;
+}
+
+forge-skeleton {
+  // Aligns the loading skeleton with where the real value sits.
+  // Do NOT change these unless the label-value gap changes.
+  margin-top: 6px;
+  margin-bottom: -4px;
+}
+
+.checkbox-progress {
+  margin-left: 0.5rem;
+}
+
+// Occupies the value line without being announced or read, so blank fields keep their row height.
+.value-placeholder {
+  visibility: hidden;
+}
+
+.value-empty {
+  color: rgba(255, 255, 255, .6);
+  font-style: italic;
+}
+

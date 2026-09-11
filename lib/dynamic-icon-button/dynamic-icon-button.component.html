@@ -1,0 +1,17 @@
+<!-- #docregion -->
+<forge-icon-button
+  [variant]="_resolvedVariant()"
+  [theme]="theme()"
+  [density]="density()"
+  [aria-label]="_resolvedDescription()"
+  [disabled]="isDisabled()">
+  @if (isLoading()) {
+    <forge-circular-progress />
+  } @else {
+    <forge-icon [name]="_resolvedIcon()" [external]="isExternal()" />
+  }
+  <forge-tooltip [placement]="tooltipPlacement()" [delay]="tooltipDelay()">
+    {{ _resolvedDescription() }}
+  </forge-tooltip>
+</forge-icon-button>
+<!-- #enddocregion -->

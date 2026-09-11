@@ -1,0 +1,28 @@
+<forge-scaffold>
+  <forge-toolbar slot="header" auto-height>
+    @if (icon()) {
+      <forge-icon slot="start" class="heading-icon" [name]="icon()" />
+    }
+    <span slot="start" class="forge-typography--heading2">{{ _resolvedHeading() }}</span>
+    <forge-icon-button slot="after-end" [attr.aria-label]="cancelLabel()" [disabled]="busy()" (click)="cancel.emit()">
+      <forge-icon [name]="cancelIcon()" />
+    </forge-icon-button>
+  </forge-toolbar>
+
+  <div slot="body" class="dialog-body">
+    <ng-content />
+  </div>
+
+  <forge-toolbar slot="footer" inverted>
+    <forge-button slot="start" variant="outlined" [disabled]="busy()" (click)="cancel.emit()">
+      <forge-icon slot="start" [name]="cancelIcon()" />
+      {{ cancelLabel() }}
+    </forge-button>
+    @if (_showConfirm()) {
+      <forge-button slot="end" variant="raised" [disabled]="confirmDisabled() || busy()" (click)="confirm.emit()">
+        <forge-icon slot="start" [name]="confirmIcon()" />
+        {{ confirmLabel() }}
+      </forge-button>
+    }
+  </forge-toolbar>
+</forge-scaffold>
