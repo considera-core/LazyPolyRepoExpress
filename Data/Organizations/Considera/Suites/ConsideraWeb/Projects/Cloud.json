@@ -1,10 +1,32 @@
 {
+    "AppConfig": {
+        "Environments": {
+            "Dev": {
+                "Url": "https://local.considera.dev/cloud"
+            },
+            "Prod": {
+                "Url": "https://app.considera.dev/cloud"
+            }
+        }
+    },
+    "GitConfig": {
+        "HomeBranch": "master",
+        "ProtectedBranches": [
+            "master"
+        ]
+    },
+    "IdeConfig": {
+        "PreferredIde": "webstorm",
+        "PathCode": ".",
+        "PathWebstorm": "."
+    },
     "NgConfig": {
-        "PathServe": "projects/cloud-portal",
-        "PathBuild": "projects/cloud-portal",
-        "PathTest": "projects/cloud-portal",
+        "WorkspaceProject": "cloud-portal",
+        "Path": "projects/cloud-portal",
+        "CommandInstall": "npm install",
         "CommandServe": "npm run serve:cloud",
         "CommandBuild": "npm run build:cloud",
-        "CommandTest": "npm run test:cloud"
+        "CommandTest": "npm run test:cloud",
+        "CommandLint": "npm run lint:cloud"
     }
 }

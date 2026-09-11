@@ -1,8 +1,30 @@
 {
+    "AppConfig": {
+        "Environments": {
+            "Dev": {
+                "Url": "https://local.considera.dev:5002"
+            },
+            "Prod": {
+                "Url": "https://app.considera.dev:5002"
+            }
+        }
+    },
     "DotnetConfig": {
         "PathSln": "ConsideraBff.sln",
         "PathCsproj": "ConsideraBff/Considera.Bff.csproj",
         "PathTestCsproj": "ConsideraBff/ConsideraWeb.Bff.Tests.csproj",
-        "PathSdkCsproj": "ConsideraBff/ConsideraWeb.Bff.Sdk.csproj"
+        "PathSdkCsproj": "ConsideraBff/ConsideraWeb.Bff.Sdk.csproj",
+        "PathEnvFile": "ConsideraBff/.env"
+    },
+    "GitConfig": {
+        "HomeBranch": "master",
+        "ProtectedBranches": [
+            "master"
+        ]
+    },
+    "IdeConfig": {
+        "PreferredIde": "rider",
+        "PathCode": ".",
+        "PathRider": "ConsideraBff.sln"
     }
 }

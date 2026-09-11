@@ -1,15 +1,123 @@
 {
+    "//": "Per project config. One file per project at Data/Organizations/<Org>/Suites/<Suite>/Projects/<PascalProjectIdentifier>.json. Every block is optional: a project declares only the blocks its framework and its Modules.Definitions.csv rows need. Projects.csv stays the routing index (identity, framework, type, root path, external); this file holds everything shaped per framework or per module.",
+
+    "AppConfig": {
+        "//": "app module. Drives FnAppLaunch / FnEtcExecFramework, which today hardcode one command per framework.",
+        "Environments": {
+            "Dev": {
+                "Url": "string"
+            },
+            "Prod": {
+                "Url": "string"
+            }
+        }
+    },
+
+    "AwsConfig": {
+        "Profile": "string"
+    },
+
+    "BatchConfig": {
+        "CommandRun": "string"
+    },
+
+    "CaddyConfig": {
+        "PathCaddyfile": "string"
+    },
+
+    "DbConfig": {
+        "//": "db module: migrate, seed, reset.",
+        "Provider": "string",
+        "PathMigrations": "string",
+        "ContextName": "string",
+        "ConnectionStringName": "string"
+    },
+
+    "DockerConfig": {
+        "PathDockerfile": "string",
+        "PathCompose": "string",
+        "PathBuildContext": "string",
+        "ImageName": "string",
+        "Tag": "string",
+        "Registry": "string",
+        "CommandBuild": "string",
+        "CommandRun": "string",
+        "CommandPush": "string",
+        "CommandUp": "string",
+        "CommandDown": "string"
+    },
+
     "DotnetConfig": {
         "PathSln": "string",
         "PathCsproj": "string",
         "PathTestCsproj": "string",
-        "PathSdkCsproj": "string"
+        "PathSdkCsproj": "string",
+        "PathEnvFile": "string"
     },
+
+    "GitConfig": {
+        "HomeBranch": "string",
+        "ProtectedBranches": "string[]"
+    },
+
+    "IdeConfig": {
+        "//": "ide module. Each IDE gets the path it actually wants to open, relative to ProjectRootPath.",
+        "PreferredIde": "string",
+        "PathCode": "string",
+        "PathRider": "string?",
+        "PathWebstorm": "string?",
+        "PathJetbrains": "string?"
+    },
+
     "NgConfig": {
-        "PathServe": "string",
-        "PathBuild": "string",
-        "PathTest": "string",
+        "WorkspaceProject": "string",
+        "Path": "string",
+        "CommandInstall": "string",
         "CommandServe": "string",
+        "CommandBuild": "string",
+        "CommandTest": "string",
+        "CommandLint": "string"
+    },
+
+    "NodeConfig": {
+        "//": "npm and npx modules.",
+        "PathPackageJson": "string",
+        "PackageManager": "string"
+    },
+
+    "NugetConfig": {
+        "//": "nuget module: restore, pack, push.",
+        "PathNuspec": "string",
+        "PackageId": "string",
+        "Source": "string",
+        "ApiKeyConfigKey": "string",
+        "CommandRestore": "string",
+        "CommandPack": "string",
+        "CommandPush": "string"
+    },
+
+    "SamConfig": {
+        "PathTemplate": "string",
+        "PathSamConfig": "string",
+        "PathBuildOutput": "string",
+        "StackName": "string",
+        "S3Bucket": "string",
+        "Capabilities": "string[]",
+        "CommandBuild": "string",
+        "CommandDeploy": "string"
+    },
+
+    "TerraformConfig": {
+        "PathRoot": "string",
+        "PathVarFile": "string",
+        "PathBackendConfig": "string",
+        "Workspace": "string",
+        "AutoApprove": "boolean"
+    },
+
+    "UnityConfig": {
+        "PathProject": "string",
+        "CommandOpen": "string",
         "CommandBuild": "string",
         "CommandTest": "string"
     }

@@ -1,8 +1,36 @@
 {
+    "AppConfig": {
+        "Environments": {
+            "Dev": {
+                "Url": "https://local.considera.dev:5001"
+            },
+            "Prod": {
+                "Url": "https://app.considera.dev:5001"
+            }
+        }
+    },
+    "DbConfig": {
+        "Provider": "mysql",
+        "PathMigrations": "ConsideraApi/Migrations",
+        "ContextName": "ConsideraDbContext",
+        "ConnectionStringName": "DefaultConnection"
+    },
     "DotnetConfig": {
         "PathSln": "ConsideraApi.sln",
         "PathCsproj": "ConsideraApi/Considera.Api.csproj",
         "PathTestCsproj": "ConsideraApi/ConsideraWeb.Api.Tests.csproj",
-        "PathSdkCsproj": "ConsideraApi/ConsideraWeb.Api.Sdk.csproj"
+        "PathSdkCsproj": "ConsideraApi/ConsideraWeb.Api.Sdk.csproj",
+        "PathEnvFile": "ConsideraApi/.env"
+    },
+    "GitConfig": {
+        "HomeBranch": "master",
+        "ProtectedBranches": [
+            "master"
+        ]
+    },
+    "IdeConfig": {
+        "PreferredIde": "rider",
+        "PathCode": ".",
+        "PathRider": "ConsideraApi.sln"
     }
 }
