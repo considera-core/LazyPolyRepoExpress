@@ -1,0 +1,6 @@
+:host {
+  display: inline-flex;
+
+  // Match the spinner to the icon it replaces so the button doesn't resize when `loading` flips.
+  --forge-circular-progress-size: var(--forge-icon-button-icon-size, 24px);
+}

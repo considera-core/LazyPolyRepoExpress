@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  // Keeps a short form from collapsing into a cramped dialog.
+  min-width: 420px;
+  min-height: 320px;
+}
+
+.heading-icon {
+  margin-right: 0.5rem;
+}
+
+.dialog-body {
+  padding: 1rem;
+}

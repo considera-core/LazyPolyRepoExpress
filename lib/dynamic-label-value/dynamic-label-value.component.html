@@ -1,0 +1,74 @@
+@switch (valueMode()) {
+  @case ('view') {
+    @switch (valueType()) {
+      @case ('checkbox') {
+        <forge-checkbox disabled [value]="_formValue()" [checked]="_isChecked()" [dense]="dense()">
+          {{ label() }}
+          @if (loading()) {
+            <forge-icon class="checkbox-progress">
+              <forge-circular-progress indeterminate />
+            </forge-icon>
+          }
+        </forge-checkbox>
+      }
+      @default {
+        <forge-label-value [dense]="dense()">
+          <span slot="label">{{ label() }}</span>
+          @if (loading()) {
+            <forge-skeleton slot="label" text />
+          } @else if (_isEmpty()) {
+            <!-- Reserves the value line so a row of fields keeps a consistent height when one is blank. -->
+            <span slot="value" class="value-placeholder">N/A</span>
+          } @else {
+            @let displayValue = valueType() === 'select' ? _selectValue() : value();
+            <span slot="value">
+              @if (code()) {
+                <code>{{ displayValue }}</code>
+              } @else {
+                {{ displayValue }}
+              }
+            </span>
+          }
+        </forge-label-value>
+      }
+    }
+  }
+  @case ('edit') {
+    @switch (valueType()) {
+      @case ('text') {
+        <forge-text-field [theme]="error() ? 'error' : 'default'" [dense]="dense()" [required]="required()">
+          <label [for]="_inputId">{{ label() }}</label>
+          <input
+            [id]="_inputId"
+            [type]="inputType()"
+            [value]="_formValue()"
+            [disabled]="_isDisabled()"
+            (input)="_onInput($event)" />
+        </forge-text-field>
+        <ng-content select="[slot='edit-text-tooltip']" />
+      }
+      @case ('select') {
+        <forge-select
+          [theme]="error() ? 'error' : 'default'"
+          [label]="label()"
+          [value]="_formValue()"
+          [options]="selectOptions()"
+          [disabled]="_isDisabled()"
+          [dense]="dense()"
+          [required]="required()"
+          (change)="_onSelect($event)" />
+      }
+      @case ('checkbox') {
+        <forge-checkbox
+          [value]="_formValue()"
+          [checked]="_isChecked()"
+          [disabled]="_isDisabled()"
+          [dense]="dense()"
+          [required]="required()"
+          (change)="_onCheckboxChange($event)">
+          {{ label() }}
+        </forge-checkbox>
+      }
+    }
+  }
+}
